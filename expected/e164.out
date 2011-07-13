@@ -9,6 +9,7 @@ DETAIL:  Creating a shell type definition.
 psql:e164.sql:29: NOTICE:  argument type e164 is only a shell
 psql:e164.sql:34: NOTICE:  return type e164 is only a shell
 psql:e164.sql:39: NOTICE:  argument type e164 is only a shell
+\set VERBOSITY terse
 SET SEARCH_PATH to public, e164;
 CREATE TABLE telephone_numbers
 (
@@ -391,43 +392,35 @@ DROP TABLE telephone_numbers;
 -- Invalid input strings
 -- non-numeric characters in string
 SELECT CAST('+1234567890a' AS e164);
-ERROR:  invalid E164 number format: "+1234567890a"
-HINT:  E164 numbers begin with a "+" followed by digits.
+ERROR:  invalid E164 number format: "+1234567890a" at character 13
 SELECT CAST('+a' AS e164);
-ERROR:  string too short "+a"
-HINT:  E164 numbers must have at least 2 digits.
+ERROR:  string too short "+a" at character 13
 -- leading or trailing whitespace
 SELECT CAST(' +1234567890' AS e164);
-ERROR:  invalid E164 prefix: " +1234567890"
-HINT:  E164 numbers must begin with "+".
+ERROR:  invalid E164 prefix: " +1234567890" at character 13
 SELECT CAST('+1234567890 ' AS e164);
-ERROR:  invalid E164 number format: "+1234567890 "
-HINT:  E164 numbers begin with a "+" followed by digits.
+ERROR:  invalid E164 number format: "+1234567890 " at character 13
 SELECT CAST(' +1234567890 ' AS e164);
-ERROR:  invalid E164 prefix: " +1234567890 "
-HINT:  E164 numbers must begin with "+".
+ERROR:  invalid E164 prefix: " +1234567890 " at character 13
 -- no prefix
 SELECT CAST('1234567890' AS e164);
-ERROR:  invalid E164 prefix: "1234567890"
-HINT:  E164 numbers must begin with "+".
+ERROR:  invalid E164 prefix: "1234567890" at character 13
 -- too short for e164
 SELECT CAST('+1' AS e164);
-ERROR:  string too short "+1"
-HINT:  E164 numbers must have at least 2 digits.
+ERROR:  string too short "+1" at character 13
 -- too long for e164
 SELECT CAST('+12345678901234567890' AS e164);
-ERROR:  string too long: "+12345678901234567890"
-HINT:  E164 values must have at most 15 digits.
+ERROR:  string too long: "+12345678901234567890" at character 13
 -- unassigned country codes
 -- 0 is reserved
 SELECT CAST('+01234567890' AS e164);
-ERROR:  unassigned country code for E164 number "+01234567890"
+ERROR:  unassigned country code for E164 number "+01234567890" at character 13
 -- 280 is Spare with Note
 SELECT CAST('+280123456' AS e164);
-ERROR:  unassigned country code for E164 number "+280123456"
+ERROR:  unassigned country code for E164 number "+280123456" at character 13
 -- 295 is Spare without Note
 SELECT CAST('+295123456' AS e164);
-ERROR:  unassigned country code for E164 number "+295123456"
+ERROR:  unassigned country code for E164 number "+295123456" at character 13
 -- inconsistent length and country code (subscriber number minimum lengths)
 -- Geographic Area and Global Service numbers require a subscriber number
 -- of at least one digit. As *all* E164 numbers must have a subscriber
@@ -437,8 +430,7 @@ ERROR:  unassigned country code for E164 number "+295123456"
 -- Geographic Area: minimum 1 digit
 -- '+1' should actually be caught as a minimum length error before this
 SELECT CAST('+1' AS e164);
-ERROR:  string too short "+1"
-HINT:  E164 numbers must have at least 2 digits.
+ERROR:  string too short "+1" at character 13
 SELECT CAST('+11' AS e164);
  e164 
 ------
@@ -447,7 +439,7 @@ SELECT CAST('+11' AS e164);
 
 -- These should raise no subscriber number digit errors
 SELECT CAST('+81' AS e164);
-ERROR:  no subscriber number digits in E164 number "+81"
+ERROR:  no subscriber number digits in E164 number "+81" at character 13
 SELECT CAST('+811' AS e164); -- okay
  e164 
 ------
@@ -455,7 +447,7 @@ SELECT CAST('+811' AS e164); -- okay
 (1 row)
 
 SELECT CAST('+220' AS e164);
-ERROR:  no subscriber number digits in E164 number "+220"
+ERROR:  no subscriber number digits in E164 number "+220" at character 13
 SELECT CAST('+2201' AS e164); -- okay
  e164  
 -------
@@ -464,9 +456,9 @@ SELECT CAST('+2201' AS e164); -- okay
 
 -- Global Service: minimum 1 digit
 SELECT CAST('+800' AS e164);
-ERROR:  no subscriber number digits in E164 number "+800"
+ERROR:  no subscriber number digits in E164 number "+800" at character 13
 SELECT CAST('+808' AS e164);
-ERROR:  no subscriber number digits in E164 number "+808"
+ERROR:  no subscriber number digits in E164 number "+808" at character 13
 SELECT CAST('+8001' AS e164); -- okay
  e164  
 -------
@@ -483,7 +475,7 @@ SELECT CAST('+8081' AS e164); -- okay
 -- inconsistent E164 number
 -- Group of Countries: minimum 2 digits
 SELECT CAST('+3881' AS e164);
-ERROR:  inconsistent length and country code: "+3881"
+ERROR:  inconsistent length and country code: "+3881" at character 13
 SELECT CAST('+38812' AS e164); -- okay
   e164  
 --------
@@ -491,7 +483,7 @@ SELECT CAST('+38812' AS e164); -- okay
 (1 row)
 
 SELECT CAST('+3882' AS e164);
-ERROR:  inconsistent length and country code: "+3882"
+ERROR:  inconsistent length and country code: "+3882" at character 13
 SELECT CAST('+38822' AS e164); -- okay
   e164  
 --------
@@ -500,7 +492,7 @@ SELECT CAST('+38822' AS e164); -- okay
 
 -- Network: minimum 2 digits
 SELECT CAST('+8701' AS e164);
-ERROR:  inconsistent length and country code: "+8701"
+ERROR:  inconsistent length and country code: "+8701" at character 13
 SELECT CAST('+87019' AS e164); -- okay
   e164  
 --------
@@ -508,7 +500,7 @@ SELECT CAST('+87019' AS e164); -- okay
 (1 row)
 
 SELECT CAST('+8711' AS e164);
-ERROR:  inconsistent length and country code: "+8711"
+ERROR:  inconsistent length and country code: "+8711" at character 13
 SELECT CAST('+87119' AS e164); -- okay
   e164  
 --------
