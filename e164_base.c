@@ -574,7 +574,7 @@ char * e164Out (E164 aNumber)
     /* allocate space for the string + terminator */
     /* FIXME memory leak */
     char * theString = malloc(E164MaximumStringLength + 1);
-    stringFromE164(theString, theNumber, E164MaximumStringLength);
+    stringFromE164(theString, theNumber, E164MaximumStringLength + 1);
     return theString;
 }
 

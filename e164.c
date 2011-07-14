@@ -143,7 +143,7 @@ e164_out(PG_FUNCTION_ARGS)
 {
     E164	theNumber = PG_GETARG_E164(0);
     char * theString = palloc(E164MaximumStringLength + 1);
-    (void) stringFromE164(theString, theNumber, E164MaximumStringLength);
+    (void) stringFromE164(theString, theNumber, E164MaximumStringLength + 1);
     PG_RETURN_CSTRING(theString);
 }
 
@@ -171,13 +171,19 @@ PG_FUNCTION_INFO_V1(e164_cast_to_text);
 Datum
 e164_cast_to_text(PG_FUNCTION_ARGS)
 {
-	E164	theNumber = PG_GETARG_E164(0);
-	text * textString = makeText(E164MaximumStringLength);
+    E164	theNumber = PG_GETARG_E164(0);
+    char	buffer[E164MaximumStringLength + 1];
+    int		stringLength;
+    text *	textString;
 
-	stringFromE164(VARDATA(textString),
-				   theNumber,
-				   E164MaximumStringLength);
-	PG_RETURN_TEXT_P(textString);
+    stringLength = stringFromE164(buffer,
+                                  theNumber,
+                                  E164MaximumStringLength + 1);
+
+    textString = makeText(stringLength);
+    memcpy(VARDATA(textString), buffer, stringLength);
+
+    PG_RETURN_TEXT_P(textString);
 }
 
 PG_FUNCTION_INFO_V1(is_consistent);
@@ -192,8 +198,15 @@ Datum
 country_code(PG_FUNCTION_ARGS)
 {
     E164	aNumber = PG_GETARG_E164(0);
-    text * textString = makeText(e164CountryCodeLength(aNumber) + 1);
-	countryCodeStringFromE164(VARDATA(textString), aNumber);
+    char	buffer[E164MaximumCountryCodeLength + 1];
+    int		stringLength;
+    text *	textString;
+
+    stringLength = countryCodeStringFromE164(buffer, aNumber);
+
+    textString = makeText(stringLength);
+    memcpy(VARDATA(textString), buffer, stringLength);
+
     PG_RETURN_TEXT_P(textString);
 }
 
