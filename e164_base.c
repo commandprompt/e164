@@ -22,6 +22,11 @@
 /*
  * The largest possible E164 number is 999_999_999_999_999, which is
  * equal to 0x3_8d7e_a4c6_7fff.  Thus the number mask value.
+ *
+ * The largest valid E164 number is currently 998_999_999_999_999,
+ * according to this document:
+ *
+ * http://www.itu.int/dms_pub/itu-t/opb/sp/T-SP-E.164D-2009-PDF-E.pdf
  */
 #define E164_NUMBER_MASK    0x0003FFFFFFFFFFFFULL
 #define E164_CC_LENGTH_MASK 0x000C000000000000ULL
