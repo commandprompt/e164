@@ -3,7 +3,7 @@
 
 MODULES = e164
 DATA_built = e164.sql
-DOCS = README.e164
+DOCS = README.md
 REGRESS = e164
 
 PG_CONFIG = pg_config
