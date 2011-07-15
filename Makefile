@@ -6,6 +6,6 @@ DATA_built = e164.sql
 DOCS = README.md
 REGRESS = e164
 
-PG_CONFIG = pg_config
+PG_CONFIG ?= pg_config
 PGXS = $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
