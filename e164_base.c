@@ -482,10 +482,6 @@ static const E164Type e164TypeFor[] = {
 /*
  * Function prototypes
  */
-
-E164 e164In (char * theString);
-char * e164Out (E164 aNumber);
-
 static inline E164Type e164Type (E164 theNumber);
 static inline E164CountryCode e164CountryCode (E164 theNumber);
 static inline int countryCodeStringFromE164 (char * aString, E164 aNumber);
@@ -501,7 +497,6 @@ static inline bool hasValidLengthForE164Type (int numberLength,
                                               E164Type aType);
 static inline void initializeE164WithCountryCode (E164 * aNumber,
                                                   E164CountryCode * aCountryCode);
-static bool e164IsConsistent (E164 aNumber);
 
 /*
  * unused, but perhaps useful as faster than converting country codes to text
@@ -553,35 +548,6 @@ static inline bool e164IsGreaterThan (E164 firstNumber, E164 secondNumber);
 /*
  * Function definitions
  */
-
-/*
- * e164In is the input function for the E164 type. Only for use during unit testing
- */
-E164 e164In (char * theString)
-{
-    E164 theNumber;
-
-    if (E164NoParseError == e164FromString(&theNumber, theString))
-        return theNumber;
-    /* FIXME -- report error instead of exit */
-#ifdef E164_BASE_CHECK
-    exit(E164DebugSignalE164In);
-#endif
-
-    return 0;	/* keep compiler quiet */
-}
-/*
- * e164Out is the output function for the E164 type
- */
-char * e164Out (E164 aNumber)
-{
-    E164 theNumber = aNumber;
-    /* allocate space for the string + terminator */
-    /* FIXME memory leak */
-    char * theString = malloc(E164MaximumStringLength + 1);
-    stringFromE164(theString, theNumber, E164MaximumStringLength + 1);
-    return theString;
-}
 
 /*
  * e164Free frees the memory allocated for an E164 variable
@@ -1018,12 +984,6 @@ void initializeE164WithCountryCode (E164 * aNumber,
         /* FIXME -- exit more gracefully */
         exit(E164DebugSignalInitializeE164WithCountryCode);
 #endif
-}
-
-static inline
-bool e164IsConsistent (E164 aNumber)
-{
-    return (aNumber == e164In(e164Out(aNumber)));
 }
 
 /*

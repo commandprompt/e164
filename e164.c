@@ -118,7 +118,6 @@ Datum e164_cmp(PG_FUNCTION_ARGS);
 Datum e164_cast_to_text(PG_FUNCTION_ARGS);
 
 Datum country_code(PG_FUNCTION_ARGS);
-Datum is_consistent(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(e164_in);
 Datum
@@ -184,13 +183,6 @@ e164_cast_to_text(PG_FUNCTION_ARGS)
     memcpy(VARDATA(textString), buffer, stringLength);
 
     PG_RETURN_TEXT_P(textString);
-}
-
-PG_FUNCTION_INFO_V1(is_consistent);
-Datum
-is_consistent(PG_FUNCTION_ARGS)
-{
-    PG_RETURN_BOOL(e164IsConsistent(PG_GETARG_E164(0)));
 }
 
 PG_FUNCTION_INFO_V1(country_code);

@@ -77,11 +77,6 @@ FROM telephone_numbers
 ORDER BY CAST(telephone_number AS text);
 
 SELECT telephone_number
-    , is_consistent(telephone_number)
-FROM telephone_numbers
-ORDER BY telephone_number;
-
-SELECT telephone_number
     , country_code(telephone_number)
 FROM telephone_numbers
 ORDER BY telephone_number;
