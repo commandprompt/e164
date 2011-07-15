@@ -6,16 +6,6 @@
 #define E164_BASE_C
 
 #include <postgres.h>
-/*
- * FIXME
- * Using palloc/pfree causes backends to die when inputing E164 numbers
- * with more than 10 digits. Haven't gotten to the bottom of this yet.
- * Use PostgreSQL's memory management functions unless running unit tests
- */
-#ifndef E164_BASE_CHECK
-#define free pfree
-#define malloc palloc
-#endif
 
 #define E164_PREFIX '+'
 
@@ -496,7 +486,7 @@ static inline bool hasValidLengthForE164Type (int numberLength,
                                               int countryCodeLength,
                                               E164Type aType);
 static inline void initializeE164WithCountryCode (E164 * aNumber,
-                                                  E164CountryCode * aCountryCode);
+                                                  E164CountryCode aCountryCode);
 
 /*
  * unused, but perhaps useful as faster than converting country codes to text
@@ -514,7 +504,6 @@ static inline E164ParseResult e164FromString (E164 * aNumber, char * aString);
 static inline int stringFromE164 (char * aString,
                                   E164 aNumber,
                                   int stringLength);
-static inline void e164Free (E164 * theNumber);
 
 static inline bool isEndOfString (const char * theChar);
 static inline bool eachCharIsDigit (const char * aString);
@@ -548,15 +537,6 @@ static inline bool e164IsGreaterThan (E164 firstNumber, E164 secondNumber);
 /*
  * Function definitions
  */
-
-/*
- * e164Free frees the memory allocated for an E164 variable
- */
-void e164Free (E164 * theNumber)
-{
-    free(theNumber);
-    return;
-}
 
 static inline
 int e164Comparison (E164 firstNumber, E164 secondNumber)
@@ -635,10 +615,9 @@ static inline
 E164CountryCode e164CountryCode (E164 theNumber)
 {
     E164CountryCode aCountryCode;
-    char * aCountryCodeString = malloc(E164MaximumCountryCodeLength + 1);
+    char aCountryCodeString[E164MaximumCountryCodeLength + 1];
     countryCodeStringFromE164(aCountryCodeString, theNumber);
     aCountryCode = e164CountryCodeFromString(aCountryCodeString);
-    free(aCountryCodeString);
     return aCountryCode;
 }
 
@@ -771,14 +750,13 @@ bool stringHasValidE164Prefix (const char * aString)
 static inline
 E164ParseResult e164FromString (E164 * aNumber, char * aString)
 {
-    char * theDigits = malloc(E164MaximumStringLength);
-    E164CountryCode * countryCode = malloc(sizeof(E164CountryCode));
-    char * subscriberNumber = malloc(E164MaximumStringLength);
+    char theDigits[E164MaximumStringLength + 1];
+    E164CountryCode countryCode;
+    char subscriberNumber[E164MaximumStringLength + 1];
     E164ParseResult e164ParseResult;
 
     e164ParseResult = parseE164String(aString, theDigits,
-                                      countryCode, subscriberNumber);
-    free(subscriberNumber);
+                                      &countryCode, subscriberNumber);
     if (E164NoParseError == e164ParseResult)
     {
         E164 e164Result;
@@ -787,8 +765,6 @@ E164ParseResult e164FromString (E164 * aNumber, char * aString)
         e164Result = (e164Result | strtoll(theDigits, &cp, 10));
         *aNumber = e164Result;
     }
-    free(countryCode);
-    free(theDigits);
     return e164ParseResult;
 }
 
@@ -833,7 +809,7 @@ int parseE164String (const char * aNumberString,
 
         int numberOfCountryCodeDigits = 0;
         int digitIndex;
-        char * countryCodeString = malloc(E164MaximumCountryCodeLength + 1);
+        char countryCodeString[E164MaximumCountryCodeLength + 1];
         E164CountryCode aCountryCode;
         E164Type theType = E164Invalid;
 
@@ -845,10 +821,8 @@ int parseE164String (const char * aNumberString,
         {
             E164Type aType;
             if (endOfString <= (remainder + digitIndex))
-            {
-                free(countryCodeString);
                 return E164ParseErrorNoSubscriberNumberDigits;
-            }
+
             strncpy(countryCodeString, remainder, digitIndex);
             countryCodeString[digitIndex] = '\0';
             aCountryCode = e164CountryCodeFromString(countryCodeString);
@@ -860,7 +834,7 @@ int parseE164String (const char * aNumberString,
                 break;
             }
         }
-        free(countryCodeString);
+
         /*
          * Assign country code.
          * If it's invalid, it'll be used in the error message.
@@ -940,19 +914,19 @@ bool hasValidLengthForE164Type (int numberLength,
  */
 static inline
 void initializeE164WithCountryCode (E164 * aNumber,
-                                    E164CountryCode * aCountryCode)
+                                    E164CountryCode aCountryCode)
 {
     /*
      * Only Geographic Areas have country codes with lengths 1 or 2.
      */
-    if (isOneDigitE164CountryCode(*aCountryCode))
+    if (isOneDigitE164CountryCode(aCountryCode))
         *aNumber = E164_ONE_DIGIT_CC_MASK | E164_GEOGRAPHIC_AREA_MASK;
-    else if (isTwoDigitE164CountryCode(*aCountryCode))
+    else if (isTwoDigitE164CountryCode(aCountryCode))
         *aNumber = E164_TWO_DIGIT_CC_MASK | E164_GEOGRAPHIC_AREA_MASK;
-    else if (isThreeDigitE164CountryCode(*aCountryCode))
+    else if (isThreeDigitE164CountryCode(aCountryCode))
     {
         uint64 typeMask = 0;
-        E164Type aType = e164TypeForCountryCode(*aCountryCode);
+        E164Type aType = e164TypeForCountryCode(aCountryCode);
         switch (aType)
         {
             case E164GeographicArea:
