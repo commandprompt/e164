@@ -91,16 +91,6 @@ FROM telephone_numbers
 CROSS JOIN (SELECT CAST('+442073779923' AS e164)) AS a(a_telephone_number)
 ORDER BY telephone_number;
 
-SELECT telephone_number < a_telephone_number as lt
-    , telephone_number <= a_telephone_number as le
-    , telephone_number = a_telephone_number as eq
-    , telephone_number >= a_telephone_number as ge
-    , telephone_number > a_telephone_number as gt
-    , telephone_number <> a_telephone_number as ne
-FROM telephone_numbers
-CROSS JOIN (SELECT CAST('+442073779923' AS e164)) AS a(a_telephone_number)
-ORDER BY telephone_number;
-
 CREATE INDEX telephone_number_hash_idx
 ON telephone_numbers USING hash
 (telephone_number) ;
