@@ -1,7 +1,8 @@
 # E164 Type contrb module Makefile
 # $Id: Makefile 53 2007-09-10 01:13:48Z glaesema $
 
-MODULES = e164
+MODULE_big = e164
+OBJS = e164.o e164_base.o e164_types.o
 DATA_built = e164.sql
 DOCS = README.md
 REGRESS = e164

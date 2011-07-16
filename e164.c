@@ -8,7 +8,7 @@
 #include <postgres.h>
 #include "libpq/pqformat.h"
 #include "access/hash.h"
-#include "e164_base.c"
+#include "e164_base.h"
 
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
