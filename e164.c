@@ -72,13 +72,7 @@ handleE164ParseError(E164ParseResult error, const char * string,
                      errmsg("inconsistent length and country code for E164 number \"%s\" (country code: %d)", string, countryCode)));
             break;
         default:
-            /*
-             * FIXME
-             * Handle the default cause properly: shouldn't ever reach this point
-             */
-            ereport(ERROR,
-                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("unknown input error for E164 number \"%s\"", string)));
+            AssertArg(false);
     }
 }
 

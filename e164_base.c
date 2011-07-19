@@ -29,25 +29,6 @@
 #define E164_GROUP_OF_COUNTRIES_MASK 0x0080000000000000ULL
 
 /*
- * FIXME
- * These debug symbols should *not* be used in production
- * code, so should not be required here.
- */
-typedef enum E164DebugSignal
-{
-    E164DebugSignalE164CountryCodeFromString_bad_CC = 1,
-    E164DebugSignalE164CountryCodeFromString_invalid_CC,
-    E164DebugSignalHasValidLengthForE164Type_SN_LESS_THAN_ZERO,
-    E164DebugSignalHasValidLengthFore164Type_INVALID_E164TYPE,
-    E164DebugSignalCheckE164CountryCodeForRangeError,
-    E164DebugSignalE164In,
-    E164DebugSignalInitializeE164WithCountryCode,
-    E164DebugSignalE164CountryCodeLength,
-    E164DebugSignalInitializeE164WithCountryCodeUnrecognizedType,
-    E164DebugSignalE164Type
-} E164DebugSignal;
-
-/*
  * Function prototypes
  */
 static inline E164Type e164Type (E164 theNumber);
@@ -144,15 +125,8 @@ E164Type e164Type (E164 theNumber)
         return E164Network;
     else if (theNumber & E164_GROUP_OF_COUNTRIES_MASK)
         return E164GroupOfCountries;
-    else
-    {
-#ifdef E164_BASE_CHECK
-        raise(E164DebugSignalE164Type);
-#else
-        /* FIXME -- assertion */
-        exit(E164DebugSignalE164Type);
-#endif
-    }
+
+    AssertArg(false);
 }
 
 /*
@@ -203,25 +177,9 @@ E164CountryCode e164CountryCodeFromString (const char * aString)
         theCountryCode = (E164CountryCode) atoi(aString);
         if (e164CountryCodeIsInRange(theCountryCode))
             return theCountryCode;
-        else
-        {
-#ifdef E164_BASE_CHECK
-            raise(E164DebugSignalE164CountryCodeFromString_invalid_CC);
-#else
-/* FIXME -- should raise an error rather than exiting */
-            exit(E164DebugSignalE164CountryCodeFromString_invalid_CC);
-#endif
-        }
     }
-    else
-    {
-#ifdef E164_BASE_CHECK
-        raise(E164DebugSignalE164CountryCodeFromString_bad_CC);
-#else
-/* FIXME -- should raise an error rather than exiting */
-        exit(E164DebugSignalE164CountryCodeFromString_bad_CC);
-#endif
-    }
+
+    AssertArg(false);
 }
 
 /*
@@ -386,14 +344,10 @@ bool hasValidLengthForE164Type (int numberLength,
 {
     int subscriberNumberLength = (numberLength - countryCodeLength);
     if (0 > subscriberNumberLength)
-#ifdef E164_BASE_CHECK
-        raise(E164DebugSignalHasValidLengthForE164Type_SN_LESS_THAN_ZERO);
-#else
-        /* FIXME -- error more gracefully */
-        exit(E164DebugSignalHasValidLengthForE164Type_SN_LESS_THAN_ZERO);
-#endif
+        AssertArg(false);
     if (0 == subscriberNumberLength)
         return false;
+
     switch (aType)
     {
         case E164GeographicArea:
@@ -409,12 +363,7 @@ bool hasValidLengthForE164Type (int numberLength,
             return (E164GroupOfCountriesMinimumSubscriberNumberLength <= subscriberNumberLength);
             break;
         default:
-#ifdef E164_BASE_CHECK
-            raise(E164DebugSignalHasValidLengthFore164Type_INVALID_E164TYPE);
-#else
-/* FIXME -- handle error */
-            exit(E164DebugSignalHasValidLengthFore164Type_INVALID_E164TYPE);
-#endif
+            AssertArg(false);
     }
 }
 
@@ -452,22 +401,14 @@ void initializeE164WithCountryCode (E164 * aNumber,
                 typeMask = E164_GROUP_OF_COUNTRIES_MASK;
                 break;
             default:
-#ifdef E164_BASE_CHECK
-                raise(E164DebugSignalInitializeE164WithCountryCodeUnrecognizedType);
-#else
-                /* FIXME -- this should almost be an assertion */
-                exit(E164DebugSignalInitializeE164WithCountryCodeUnrecognizedType);
-#endif
+                AssertArg(false);
         }
         *aNumber = E164_THREE_DIGIT_CC_MASK | typeMask;
     }
     else
-#ifdef E164_BASE_CHECK
-        raise(E164DebugSignalInitializeE164WithCountryCode);
-#else
-        /* FIXME -- exit more gracefully */
-        exit(E164DebugSignalInitializeE164WithCountryCode);
-#endif
+    {
+        AssertArg(false);
+    }
 }
 
 /*
@@ -517,17 +458,7 @@ bool e164CountryCodeIsInRange (E164CountryCode theCountryCode)
 static inline
 void checkE164CountryCodeForRangeError (E164CountryCode theCountryCode)
 {
-    if (!e164CountryCodeIsInRange(theCountryCode))
-#ifdef E164_BASE_CHECK
-        raise(E164DebugSignalCheckE164CountryCodeForRangeError);
-#else
-/*
- * FIXME
- * Handle error more gracefully
- */
-        exit(E164DebugSignalCheckE164CountryCodeForRangeError);
-#endif
-    return;
+    AssertArg(e164CountryCodeIsInRange(theCountryCode));
 }
 
 /*
