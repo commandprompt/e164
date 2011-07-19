@@ -123,7 +123,7 @@ E164Type e164Type (E164 theNumber)
     else if (theNumber & E164_GROUP_OF_COUNTRIES_MASK)
         return E164GroupOfCountries;
 
-    AssertArg(false);
+    elog(ERROR, "E164 value is invalid: " UINT64_FORMAT, theNumber);
 }
 
 /*
@@ -308,7 +308,8 @@ bool hasValidLengthForE164Type (int numberLength,
 {
     int subscriberNumberLength = (numberLength - countryCodeLength);
     if (0 > subscriberNumberLength)
-        AssertArg(false);
+        elog(ERROR, "numberLength and countryCodeLength values are invalid: %d vs. %d", numberLength, countryCodeLength);
+
     if (0 == subscriberNumberLength)
         return false;
 
@@ -316,19 +317,22 @@ bool hasValidLengthForE164Type (int numberLength,
     {
         case E164GeographicArea:
             return (E164GeographicAreaMinimumSubscriberNumberLength <= subscriberNumberLength);
-            break;
+
         case E164GlobalService:
             return (E164GlobalServiceMinimumSubscriberNumberLength <= subscriberNumberLength);
-            break;
+
         case E164Network:
             return (E164NetworkMinimumSubscriberNumberLength <= subscriberNumberLength);
-            break;
+
         case E164GroupOfCountries:
             return (E164GroupOfCountriesMinimumSubscriberNumberLength <= subscriberNumberLength);
-            break;
+
         default:
-            AssertArg(false);
+            ; /* fall through to elog() */
     }
+
+    elog(ERROR, "E164Type value is invalid: %d", aType);
+    return false; /* keep compiler quiet */
 }
 
 /*
@@ -365,13 +369,13 @@ void initializeE164WithCountryCode (E164 * aNumber,
                 typeMask = E164_GROUP_OF_COUNTRIES_MASK;
                 break;
             default:
-                AssertArg(false);
+                elog(ERROR, "E164Type value is invalid: %d", aType);
         }
         *aNumber = E164_THREE_DIGIT_CC_MASK | typeMask;
     }
     else
     {
-        AssertArg(false);
+        elog(ERROR, "E164CountryCode value is invalid: %d", aCountryCode);
     }
 }
 
@@ -422,7 +426,8 @@ bool e164CountryCodeIsInRange (E164CountryCode theCountryCode)
 static inline
 void checkE164CountryCodeForRangeError (E164CountryCode theCountryCode)
 {
-    AssertArg(e164CountryCodeIsInRange(theCountryCode));
+    if (!e164CountryCodeIsInRange(theCountryCode))
+        elog(ERROR, "E164CountryCode value is invalid: %d", theCountryCode);
 }
 
 /*
