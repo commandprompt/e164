@@ -305,20 +305,20 @@ bool stringHasValidE164Prefix (const char * aString)
  * by the string. If the assignment is successful, e164FromString
  * returns true, and false otherwise.
  */
-E164ParseResult e164FromString (E164 * aNumber, const char * aString)
+E164ParseResult e164FromString (E164 * aNumber, const char * aString,
+                                E164CountryCode * aCode)
 {
     char theDigits[E164MaximumStringLength + 1];
-    E164CountryCode countryCode;
     char subscriberNumber[E164MaximumStringLength + 1];
     E164ParseResult e164ParseResult;
 
     e164ParseResult = parseE164String(aString, theDigits,
-                                      &countryCode, subscriberNumber);
+                                      aCode, subscriberNumber);
     if (E164NoParseError == e164ParseResult)
     {
         E164 e164Result;
         char *cp;
-        initializeE164WithCountryCode(&e164Result, countryCode);
+        initializeE164WithCountryCode(&e164Result, *aCode);
         e164Result = (e164Result | strtoll(theDigits, &cp, 10));
         *aNumber = e164Result;
     }

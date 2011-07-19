@@ -32,10 +32,9 @@ makeText (int stringLength)
     return textString;
 }
 
-static void handleE164ParseError (E164ParseResult error, const char * string);
-
 static void
-handleE164ParseError (E164ParseResult error, const char * string)
+handleE164ParseError (E164ParseResult error, const char * string,
+                      E164CountryCode countryCode)
 {
     switch (error) {
         case E164ParseErrorBadFormat:
@@ -65,7 +64,7 @@ handleE164ParseError (E164ParseResult error, const char * string)
         case E164ParseErrorInvalidType:
             ereport(ERROR,
                     (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("invalid E164 country code for E164 number \"%s\"", string)));
+                     errmsg("invalid E164 country code for E164 number \"%s\": %d", string, countryCode)));
             break;
         case E164ParseErrorNoSubscriberNumberDigits:
             ereport(ERROR,
@@ -75,12 +74,12 @@ handleE164ParseError (E164ParseResult error, const char * string)
         case E164ParseErrorUnassignedType:
             ereport(ERROR,
                     (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("unassigned country code for E164 number \"%s\"", string)));
+                     errmsg("unassigned country code for E164 number \"%s\": %d", string, countryCode)));
             break;
         case E164ParseErrorTypeLengthMismatch:
             ereport(ERROR,
                     (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("inconsistent length and country code: \"%s\"", string)));
+                     errmsg("inconsistent length and country code for E164 number \"%s\" (country code: %d)", string, countryCode)));
             break;
         default:
             /*
@@ -125,13 +124,14 @@ e164_in(PG_FUNCTION_ARGS)
 {
     const char * theString = PG_GETARG_CSTRING(0);
     E164 theNumber;
-    E164ParseResult parseResult = e164FromString(&theNumber, theString);
+    E164CountryCode theCode;
+    E164ParseResult parseResult = e164FromString(&theNumber, theString, &theCode);
     if (E164NoParseError == parseResult)
     {
         PG_RETURN_E164(theNumber);
     }
     else
-        handleE164ParseError(parseResult, theString);
+        handleE164ParseError(parseResult, theString, theCode);
 
     return 0;	/* keep compiler quiet */
 }

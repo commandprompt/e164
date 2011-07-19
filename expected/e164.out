@@ -289,13 +289,13 @@ ERROR:  string too long: "+12345678901234567890" at character 13
 -- unassigned country codes
 -- 0 is reserved
 SELECT CAST('+01234567890' AS e164);
-ERROR:  unassigned country code for E164 number "+01234567890" at character 13
+ERROR:  unassigned country code for E164 number "+01234567890": 0 at character 13
 -- 280 is Spare with Note
 SELECT CAST('+280123456' AS e164);
-ERROR:  unassigned country code for E164 number "+280123456" at character 13
+ERROR:  unassigned country code for E164 number "+280123456": 280 at character 13
 -- 295 is Spare without Note
 SELECT CAST('+295123456' AS e164);
-ERROR:  unassigned country code for E164 number "+295123456" at character 13
+ERROR:  unassigned country code for E164 number "+295123456": 295 at character 13
 -- inconsistent length and country code (subscriber number minimum lengths)
 -- Geographic Area and Global Service numbers require a subscriber number
 -- of at least one digit. As *all* E164 numbers must have a subscriber
@@ -350,7 +350,7 @@ SELECT CAST('+8081' AS e164); -- okay
 -- inconsistent E164 number
 -- Group of Countries: minimum 2 digits
 SELECT CAST('+3881' AS e164);
-ERROR:  inconsistent length and country code: "+3881" at character 13
+ERROR:  inconsistent length and country code for E164 number "+3881" (country code: 388) at character 13
 SELECT CAST('+38812' AS e164); -- okay
   e164  
 --------
@@ -358,7 +358,7 @@ SELECT CAST('+38812' AS e164); -- okay
 (1 row)
 
 SELECT CAST('+3882' AS e164);
-ERROR:  inconsistent length and country code: "+3882" at character 13
+ERROR:  inconsistent length and country code for E164 number "+3882" (country code: 388) at character 13
 SELECT CAST('+38822' AS e164); -- okay
   e164  
 --------
@@ -367,7 +367,7 @@ SELECT CAST('+38822' AS e164); -- okay
 
 -- Network: minimum 2 digits
 SELECT CAST('+8701' AS e164);
-ERROR:  inconsistent length and country code: "+8701" at character 13
+ERROR:  inconsistent length and country code for E164 number "+8701" (country code: 870) at character 13
 SELECT CAST('+87019' AS e164); -- okay
   e164  
 --------
@@ -375,7 +375,7 @@ SELECT CAST('+87019' AS e164); -- okay
 (1 row)
 
 SELECT CAST('+8711' AS e164);
-ERROR:  inconsistent length and country code: "+8711" at character 13
+ERROR:  inconsistent length and country code for E164 number "+8711" (country code: 871) at character 13
 SELECT CAST('+87119' AS e164); -- okay
   e164  
 --------
