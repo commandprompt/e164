@@ -26,7 +26,7 @@ typedef enum E164StructureLimit
     E164GeographicAreaMaximumCountryCodeLength = 3,     /* = E164MaximumCountryCodeLength */
     E164GlobalServiceCountryCodeLength         = 3,     /* = E164MaximumCountryCodeLength */
     E164NetworkCountryCodeLength               = 3,     /* = E164MaximumCountryCodeLength */
-    E164GroupOfCountrysCountryCodeLength       = 3,     /* = E164MaximumCountryCodeLength */
+    E164GroupOfCountriesCountryCodeLength      = 3,     /* = E164MaximumCountryCodeLength */
 
 /*
  * Minimum Subscriber Number lengths for the various E164Types
