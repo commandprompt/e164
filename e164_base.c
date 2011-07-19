@@ -56,9 +56,8 @@ static inline int e164CountryCodeLength (E164 aNumber);
 static inline E164CountryCode e164CountryCodeFromInteger (int anInteger);
 static inline E164CountryCode e164CountryCodeFromString (const char * aString);
 static int parseE164String (const char * aNumberString,
-                            char * theDigits,
-                            E164CountryCode * aCode,
-                            char * subscriberNumber);
+                            const char ** theDigits,
+                            E164CountryCode * aCode);
 static inline bool hasValidLengthForE164Type (int numberLength,
                                               int countryCodeLength,
                                               E164Type aType);
@@ -74,7 +73,7 @@ static inline bool e164CountryCodesAreEqual (E164CountryCode firstCountryCode,
 /* unused */
 static inline bool e164TypesAreEqual (E164Type firstType, E164Type secondType);
 
-static inline bool isValidE164PrefixChar (const char * aChar);
+static inline bool isValidE164PrefixChar (char aChar);
 static inline bool stringHasValidE164Prefix (const char * aString);
 
 static inline bool isEndOfString (const char * theChar);
@@ -223,13 +222,11 @@ E164CountryCode e164CountryCodeFromInteger (int anInteger)
 static inline
 E164CountryCode e164CountryCodeFromString (const char * aString)
 {
-    int anInteger;
     E164CountryCode theCountryCode;
     if ((E164MaximumCountryCodeLength >= strlen(aString)) &&
         eachCharIsDigit(aString))
     {
-        anInteger = atoi(aString);
-        theCountryCode = (E164CountryCode) anInteger;
+        theCountryCode = (E164CountryCode) atoi(aString);
         if (e164CountryCodeIsInRange(theCountryCode))
             return theCountryCode;
         else
@@ -284,9 +281,9 @@ bool e164TypesAreEqual (E164Type firstType, E164Type secondType)
  * and false otherwise.
  */
 static inline
-bool isValidE164PrefixChar (const char * aChar)
+bool isValidE164PrefixChar (char aChar)
 {
-    return (E164_PREFIX == *aChar);
+    return (E164_PREFIX == aChar);
 }
 
 /*
@@ -296,7 +293,7 @@ bool isValidE164PrefixChar (const char * aChar)
 static inline
 bool stringHasValidE164Prefix (const char * aString)
 {
-    return isValidE164PrefixChar(aString);
+    return isValidE164PrefixChar(*aString);
 }
 
 /*
@@ -308,12 +305,10 @@ bool stringHasValidE164Prefix (const char * aString)
 E164ParseResult e164FromString (E164 * aNumber, const char * aString,
                                 E164CountryCode * aCode)
 {
-    char theDigits[E164MaximumStringLength + 1];
-    char subscriberNumber[E164MaximumStringLength + 1];
+    const char * theDigits;
     E164ParseResult e164ParseResult;
 
-    e164ParseResult = parseE164String(aString, theDigits,
-                                      aCode, subscriberNumber);
+    e164ParseResult = parseE164String(aString, &theDigits, aCode);
     if (E164NoParseError == e164ParseResult)
     {
         E164 e164Result;
@@ -326,21 +321,23 @@ E164ParseResult e164FromString (E164 * aNumber, const char * aString,
 }
 
 /*
- * parseE164String parses aString meant to represent an E164 number, assigning the
- * digits of the E164 number to theDigits, the E164CountryCode to the aCode parameter,
- * and the remainder of the number to subscriberNumber. parseE164String returns
- * E164NoParseError on no error, or an error code describing the error encountered.
+ * parseE164String parses aString meant to represent an E164 number,
+ * assigning the digits of the E164 number to theDigits and the
+ * country code to the aCode parameter.
+ *
+ * parseE164String returns E164NoParseError on no error, or an error
+ * code describing the error encountered.
  */
 static
 int parseE164String (const char * aNumberString,
-                     char * theDigits,
-                     E164CountryCode * aCode,
-                     char * subscriberNumber)
+                     const char ** theDigits,
+                     E164CountryCode * aCode)
 {
     const int stringLength = strlen(aNumberString);
     const char * endOfString = aNumberString + stringLength;
     const char * theChar = aNumberString;
     const char * remainder;
+    const int remainderLength = stringLength - 1;
     /*
      * Make sure string doesn't exceed maximum length
      */
@@ -366,27 +363,26 @@ int parseE164String (const char * aNumberString,
 
         int numberOfCountryCodeDigits = 0;
         int digitIndex;
-        char countryCodeString[E164MaximumCountryCodeLength + 1];
-        E164CountryCode aCountryCode;
+        E164CountryCode aCountryCode = 0;
         E164Type theType = E164Invalid;
 
-        strcpy(theDigits, remainder);
+        *theDigits = remainder;
 
-        for (digitIndex = 1;
-             E164MaximumCountryCodeLength >= digitIndex;
+        for (digitIndex = 0;
+             E164MaximumCountryCodeLength > digitIndex;
              digitIndex++)
         {
             E164Type aType;
             if (endOfString <= (remainder + digitIndex))
                 return E164ParseErrorNoSubscriberNumberDigits;
 
-            strncpy(countryCodeString, remainder, digitIndex);
-            countryCodeString[digitIndex] = '\0';
-            aCountryCode = e164CountryCodeFromString(countryCodeString);
+            aCountryCode *= 10;
+            aCountryCode += remainder[digitIndex] - '0';
+
             aType = e164TypeForCountryCode(aCountryCode);
             if (E164Invalid != aType)
             {
-                numberOfCountryCodeDigits = digitIndex;
+                numberOfCountryCodeDigits = digitIndex + 1;
                 theType = aType;
                 break;
             }
@@ -404,14 +400,14 @@ int parseE164String (const char * aNumberString,
         /*
          * Need some digits for the subscriber number
          */
-        if (strlen(remainder) <= numberOfCountryCodeDigits)
+        if (remainderLength <= numberOfCountryCodeDigits)
             return E164ParseErrorNoSubscriberNumberDigits;
         /*
          * Check number against E164Type
          * This tests against abolute (and unrealistic) minimums.
          * See comment regarding minimum Subscriber Number lengths
          */
-        if (hasValidLengthForE164Type(strlen(remainder),
+        if (hasValidLengthForE164Type(remainderLength,
                                       numberOfCountryCodeDigits,
                                       theType))
             return E164NoParseError;
@@ -585,9 +581,7 @@ static inline
 bool isValidE164CountryCodeForType(E164CountryCode theCountryCode,
                                    E164Type theType)
 {
-    E164Type countryCodeType;
-    countryCodeType = e164TypeForCountryCode(theCountryCode);
-    return (countryCodeType == theType);
+    return (e164TypeForCountryCode(theCountryCode) == theType);
 }
 
 /*

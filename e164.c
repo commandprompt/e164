@@ -2,9 +2,6 @@
  * E164 Type PostgreSQL interface
  * $Id: e164.c 52 2007-08-27 15:56:09Z glaesema $
  */
-#ifndef E164_C
-#define E164_C
-
 #include <postgres.h>
 #include "libpq/pqformat.h"
 #include "access/hash.h"
@@ -14,18 +11,11 @@
 PG_MODULE_MAGIC;
 #endif
 
-
 /*
- * PostgreSQL Interface functions
+ * makeText function taken from AndrewSN's ip4r
  */
-
-/*
- * makeText, textLength, and setTextLength functions taken from
- * AndrewSN's ip4r
- */
-
 static text *
-makeText (int stringLength)
+makeText(int stringLength)
 {
     text * textString = (text *) palloc0(stringLength + VARHDRSZ);
     SET_VARSIZE(textString, stringLength + VARHDRSZ);
@@ -33,8 +23,8 @@ makeText (int stringLength)
 }
 
 static void
-handleE164ParseError (E164ParseResult error, const char * string,
-                      E164CountryCode countryCode)
+handleE164ParseError(E164ParseResult error, const char * string,
+                     E164CountryCode countryCode)
 {
     switch (error) {
         case E164ParseErrorBadFormat:
@@ -92,6 +82,9 @@ handleE164ParseError (E164ParseResult error, const char * string,
     }
 }
 
+/*
+ * PostgreSQL Interface functions
+ */
 #define DatumGetE164P(X) DatumGetInt64(X)
 #define E164PGetDatum(X) Int64GetDatum(X)
 
@@ -265,5 +258,3 @@ e164_hash(PG_FUNCTION_ARGS)
     E164 arg1 = PG_GETARG_E164(0);
     return hash_any((unsigned char *)&arg1, sizeof(E164));
 }
-
-#endif /* !E164_C */
