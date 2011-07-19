@@ -1,0 +1,4 @@
+results/
+*.o
+e164.so
+e164.sql
