@@ -51,27 +51,20 @@ typedef enum E164DebugSignal
  * Function prototypes
  */
 static inline E164Type e164Type (E164 theNumber);
+
 static inline E164CountryCode e164CountryCode (E164 theNumber);
 static inline int e164CountryCodeLength (E164 aNumber);
-static inline E164CountryCode e164CountryCodeFromInteger (int anInteger);
 static inline E164CountryCode e164CountryCodeFromString (const char * aString);
+
 static int parseE164String (const char * aNumberString,
                             const char ** theDigits,
                             E164CountryCode * aCode);
+
 static inline bool hasValidLengthForE164Type (int numberLength,
                                               int countryCodeLength,
                                               E164Type aType);
 static inline void initializeE164WithCountryCode (E164 * aNumber,
                                                   E164CountryCode aCountryCode);
-
-/*
- * unused, but perhaps useful as faster than converting country codes to text
- * and comparing.
- */
-static inline bool e164CountryCodesAreEqual (E164CountryCode firstCountryCode,
-                                             E164CountryCode secondCountryCode);
-/* unused */
-static inline bool e164TypesAreEqual (E164Type firstType, E164Type secondType);
 
 static inline bool isValidE164PrefixChar (char aChar);
 static inline bool stringHasValidE164Prefix (const char * aString);
@@ -82,11 +75,6 @@ static inline bool eachCharIsDigit (const char * aString);
 static inline bool e164CountryCodeIsInRange (E164CountryCode theCountryCode);
 static inline void checkE164CountryCodeForRangeError (E164CountryCode theCountryCode);
 
-static inline bool isValidE164CountryCodeForType(E164CountryCode theCountryCode,
-                                                 E164Type theType);
-static inline bool isValidE164CountryCodeForTypeWithDigits (E164CountryCode theCountryCode,
-                                                            E164Type theType,
-                                                            int numberOfDigits);
 static inline bool isOneDigitE164CountryCode (E164CountryCode theCountryCode);
 static inline bool isTwoDigitE164CountryCode (E164CountryCode theCountryCode);
 static inline bool isThreeDigitE164CountryCode (E164CountryCode theCountryCode);
@@ -202,20 +190,6 @@ int e164CountryCodeLength (E164 aNumber)
 }
 
 /*
- * e164CountryCodeFromInteger returns the E164CountryCode represented by anInteger.
- * An error is raised if anInteger is out of the range for E164CountryCode values.
- */
-
-static inline
-E164CountryCode e164CountryCodeFromInteger (int anInteger)
-{
-    E164CountryCode theCountryCode;
-    theCountryCode = (E164CountryCode) anInteger;
-    checkE164CountryCodeForRangeError(theCountryCode);
-    return theCountryCode;
-}
-
-/*
  * e164CountryCodeFromString returns the E164CountryCode represented by aString.
  * An error is raised if aString does not represent a valid E164CountryCode value.
  */
@@ -257,23 +231,6 @@ int stringFromE164 (char * aString, E164 aNumber, int stringLength)
 {
     return snprintf(aString, stringLength,
                     "+%lld", (aNumber & E164_NUMBER_MASK));
-}
-
-/*
- * e164CountryCodesAreEqual tests firstCountryCode and secondCountryCode for equality
- */
-
-static inline
-bool e164CountryCodesAreEqual (E164CountryCode firstCountryCode,
-                               E164CountryCode secondCountryCode)
-{
-    return (firstCountryCode == secondCountryCode);
-}
-
-static inline
-bool e164TypesAreEqual (E164Type firstType, E164Type secondType)
-{
-    return (firstType == secondType);
 }
 
 /*
@@ -571,46 +528,6 @@ void checkE164CountryCodeForRangeError (E164CountryCode theCountryCode)
         exit(E164DebugSignalCheckE164CountryCodeForRangeError);
 #endif
     return;
-}
-
-/*
- * isValidE164CountryCodeForType determines if theCountryCode is
- * valid for theType.
- */
-static inline
-bool isValidE164CountryCodeForType(E164CountryCode theCountryCode,
-                                   E164Type theType)
-{
-    return (e164TypeForCountryCode(theCountryCode) == theType);
-}
-
-/*
- * isValidE164CountryCodeForTypeWithDigits determines if theCountryCode is valid
- * for theType and has the specified numberOfDigits
- */
-static inline
-bool isValidE164CountryCodeForTypeWithDigits(E164CountryCode theCountryCode,
-                                             E164Type theType,
-                                             int numberOfDigits)
-{
-    switch (numberOfDigits) {
-        case 1:
-            if (!isOneDigitE164CountryCode(theCountryCode))
-                return false;
-            break;
-        case 2:
-            if (!isTwoDigitE164CountryCode(theCountryCode))
-                return false;
-            break;
-        case 3:
-            if (!isThreeDigitE164CountryCode(theCountryCode))
-                return false;
-            break;
-        default:
-/* FIXME -- should error or maybe even assert here */
-        return false;
-    }
-    return isValidE164CountryCodeForType(theCountryCode, theType);
 }
 
 /*
