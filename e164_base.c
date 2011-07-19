@@ -32,10 +32,7 @@
  * Function prototypes
  */
 static inline E164Type e164Type (E164 theNumber);
-
-static inline E164CountryCode e164CountryCode (E164 theNumber);
 static inline int e164CountryCodeLength (E164 aNumber);
-static inline E164CountryCode e164CountryCodeFromString (const char * aString);
 
 static int parseE164String (const char * aNumberString,
                             const char ** theDigits,
@@ -130,19 +127,6 @@ E164Type e164Type (E164 theNumber)
 }
 
 /*
- * e164CountryCode returns the E164CountryCode for the E164 argument
- */
-static inline
-E164CountryCode e164CountryCode (E164 theNumber)
-{
-    E164CountryCode aCountryCode;
-    char aCountryCodeString[E164MaximumCountryCodeLength + 1];
-    countryCodeStringFromE164(aCountryCodeString, theNumber);
-    aCountryCode = e164CountryCodeFromString(aCountryCodeString);
-    return aCountryCode;
-}
-
-/*
  * countryCodeStringFromE164 assigns the country code for aNumber to aString, returning
  * the number of characters written (in this case, the number of digits in the
  * country code).
@@ -153,7 +137,6 @@ int countryCodeStringFromE164 (char * aString, E164 aNumber)
                     "%lld", (aNumber & E164_NUMBER_MASK));
 }
 
-
 /*
  * e164CountryCodeLength returns the length of the country code for an E164 number
  */
@@ -161,25 +144,6 @@ static inline
 int e164CountryCodeLength (E164 aNumber)
 {
     return (int) ((aNumber & E164_CC_LENGTH_MASK) >> E164_CC_LENGTH_OFFSET);
-}
-
-/*
- * e164CountryCodeFromString returns the E164CountryCode represented by aString.
- * An error is raised if aString does not represent a valid E164CountryCode value.
- */
-static inline
-E164CountryCode e164CountryCodeFromString (const char * aString)
-{
-    E164CountryCode theCountryCode;
-    if ((E164MaximumCountryCodeLength >= strlen(aString)) &&
-        eachCharIsDigit(aString))
-    {
-        theCountryCode = (E164CountryCode) atoi(aString);
-        if (e164CountryCodeIsInRange(theCountryCode))
-            return theCountryCode;
-    }
-
-    AssertArg(false);
 }
 
 /*
