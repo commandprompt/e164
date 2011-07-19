@@ -2,7 +2,7 @@
  * E164 Type PostgreSQL interface
  * $Id: e164.c 52 2007-08-27 15:56:09Z glaesema $
  */
-#include <postgres.h>
+#include "postgres.h"
 #include "libpq/pqformat.h"
 #include "access/hash.h"
 #include "e164_base.h"

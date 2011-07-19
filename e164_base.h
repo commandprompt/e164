@@ -1,7 +1,7 @@
 #ifndef E164_BASE_H
 #define E164_BASE_H
 
-#include <postgres.h>
+#include "postgres.h"
 
 #define E164_PREFIX '+'
 
@@ -109,20 +109,20 @@ static const char * e164TypeName[] = {
 
 const E164Type e164TypeFor[1000];
 
-E164ParseResult e164FromString (E164 * aNumber, const char * aString,
-                                E164CountryCode * aCode);
-int stringFromE164 (char * aString, E164 aNumber, int stringLength);
-int countryCodeStringFromE164 (char * aString, E164 aNumber);
+extern E164ParseResult e164FromString (E164 * aNumber, const char * aString,
+                                       E164CountryCode * aCode);
+extern int stringFromE164 (char * aString, E164 aNumber, int stringLength);
+extern int countryCodeStringFromE164 (char * aString, E164 aNumber);
 
 /*
  * Comparison functions
  */
-int e164Comparison (E164 firstNumber, E164 secondNumber);
-bool e164IsEqualTo (E164 firstNumber, E164 secondNumber);
-bool e164IsNotEqualTo (E164 firstNumber, E164 secondNumber);
-bool e164IsLessThan (E164 firstNumber, E164 secondNumber);
-bool e164IsLessThanOrEqualTo (E164 firstNumber, E164 secondNumber);
-bool e164IsGreaterThanOrEqualTo (E164 firstNumber, E164 secondNumber);
-bool e164IsGreaterThan (E164 firstNumber, E164 secondNumber);
+extern int e164Comparison (E164 firstNumber, E164 secondNumber);
+extern bool e164IsEqualTo (E164 firstNumber, E164 secondNumber);
+extern bool e164IsNotEqualTo (E164 firstNumber, E164 secondNumber);
+extern bool e164IsLessThan (E164 firstNumber, E164 secondNumber);
+extern bool e164IsLessThanOrEqualTo (E164 firstNumber, E164 secondNumber);
+extern bool e164IsGreaterThanOrEqualTo (E164 firstNumber, E164 secondNumber);
+extern bool e164IsGreaterThan (E164 firstNumber, E164 secondNumber);
 
 #endif /* !E164_BASE_H */

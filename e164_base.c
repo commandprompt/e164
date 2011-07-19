@@ -3,7 +3,7 @@
  * $Id: e164_base.c 53 2007-09-10 01:13:48Z glaesema $
  */
 
-#include <postgres.h>
+#include "postgres.h"
 #include "e164_base.h"
 
 /*
