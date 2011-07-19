@@ -32,10 +32,10 @@ makeText (int stringLength)
     return textString;
 }
 
-static void handleE164ParseError (E164ParseResult error, char * string);
+static void handleE164ParseError (E164ParseResult error, const char * string);
 
 static void
-handleE164ParseError (E164ParseResult error, char * string)
+handleE164ParseError (E164ParseResult error, const char * string)
 {
     switch (error) {
         case E164ParseErrorBadFormat:
@@ -123,7 +123,7 @@ PG_FUNCTION_INFO_V1(e164_in);
 Datum
 e164_in(PG_FUNCTION_ARGS)
 {
-    char * theString = PG_GETARG_CSTRING(0);
+    const char * theString = PG_GETARG_CSTRING(0);
     E164 theNumber;
     E164ParseResult parseResult = e164FromString(&theNumber, theString);
     if (E164NoParseError == parseResult)

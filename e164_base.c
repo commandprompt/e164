@@ -54,7 +54,7 @@ static inline E164Type e164Type (E164 theNumber);
 static inline E164CountryCode e164CountryCode (E164 theNumber);
 static inline int e164CountryCodeLength (E164 aNumber);
 static inline E164CountryCode e164CountryCodeFromInteger (int anInteger);
-static inline E164CountryCode e164CountryCodeFromString (char * aString);
+static inline E164CountryCode e164CountryCodeFromString (const char * aString);
 static int parseE164String (const char * aNumberString,
                             char * theDigits,
                             E164CountryCode * aCode,
@@ -221,7 +221,7 @@ E164CountryCode e164CountryCodeFromInteger (int anInteger)
  * An error is raised if aString does not represent a valid E164CountryCode value.
  */
 static inline
-E164CountryCode e164CountryCodeFromString (char * aString)
+E164CountryCode e164CountryCodeFromString (const char * aString)
 {
     int anInteger;
     E164CountryCode theCountryCode;
@@ -305,7 +305,7 @@ bool stringHasValidE164Prefix (const char * aString)
  * by the string. If the assignment is successful, e164FromString
  * returns true, and false otherwise.
  */
-E164ParseResult e164FromString (E164 * aNumber, char * aString)
+E164ParseResult e164FromString (E164 * aNumber, const char * aString)
 {
     char theDigits[E164MaximumStringLength + 1];
     E164CountryCode countryCode;

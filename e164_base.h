@@ -109,7 +109,7 @@ static const char * e164TypeName[] = {
 
 const E164Type e164TypeFor[1000];
 
-E164ParseResult e164FromString (E164 * aNumber, char * aString);
+E164ParseResult e164FromString (E164 * aNumber, const char * aString);
 int stringFromE164 (char * aString, E164 aNumber, int stringLength);
 int countryCodeStringFromE164 (char * aString, E164 aNumber);
 
