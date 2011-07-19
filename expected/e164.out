@@ -383,9 +383,9 @@ SELECT CAST('+87119' AS e164); -- okay
 (1 row)
 
 -- Full 15 digits
-SELECT CAST('+989999999999999' AS e164); -- okay
+SELECT CAST('+998999999999999' AS e164); -- okay
        e164       
 ------------------
- +989999999999999
+ +998999999999999
 (1 row)
 
