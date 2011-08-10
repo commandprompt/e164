@@ -50,8 +50,20 @@
 #define E164_COMPARISON_MASK      (E164_NUMBER_MASK | E164_CACHED_CC_MASK)
 
 /*
+ * The following mask is used in sanity checks.  Update to reflect any
+ * changes in the above masks.
+ */
+#define E164_USED_BITS_MASK       E164_COMPARISON_MASK
+
+#define E164_MAX_NUMBER_VALUE     UINT64CONST(999999999999999)
+#define E164_MAX_CC_VALUE         999
+
+
+/*
  * Function prototypes
  */
+static inline void e164SanityCheck(E164 aNumber);
+
 static int parseE164String (const char * aNumberString,
                             const char ** theDigits,
                             E164CountryCode * aCode);
@@ -63,6 +75,7 @@ static inline void initializeE164WithCountryCode (E164 * aNumber,
                                                   E164CountryCode aCountryCode);
 
 static inline E164CountryCode e164CountryCodeOf (E164 theNumber);
+static inline E164CountryCode e164CountryCodeOf_no_check (E164 theNumber);
 
 static inline bool isValidE164PrefixChar (char aChar);
 static inline bool stringHasValidE164Prefix (const char * aString);
@@ -77,17 +90,55 @@ static inline bool isUnassignedE164Type (E164Type aType);
 static inline bool isInvalidE164Type (E164Type aType);
 static inline E164Type e164TypeForCountryCode (E164CountryCode theCountryCode);
 
+
 /*
  * Function definitions
  */
+
+static inline
+void e164SanityCheck(E164 aNumber)
+{
+    E164CountryCode theCountryCode;
+
+    if (0 != (aNumber & ~E164_USED_BITS_MASK))
+        elog(ERROR, "unused high bits tainted in an E164 value: " UINT64_FORMAT,
+             aNumber);
+
+    if (E164_MAX_NUMBER_VALUE < (aNumber & E164_NUMBER_MASK))
+        elog(ERROR, "the E164 number exceeds maximum possible value: " UINT64_FORMAT,
+             aNumber);
+
+    theCountryCode = e164CountryCodeOf_no_check(aNumber);
+    if (!e164CountryCodeIsInRange(theCountryCode))
+        elog(ERROR, "the country code in an E164 value exceeds allowed range: %d (" UINT64_FORMAT ")",
+             theCountryCode, aNumber);
+
+    /* TODO: we could also check if the cached country code
+     * corresponds to the actual code in the lower bits.  That'd be
+     * too expensive for a normal run, but an Assert() would probably
+     * work.
+     */
+}
+
+
 int64 e164Comparison (E164 firstNumber, E164 secondNumber)
 {
+    e164SanityCheck(firstNumber);
+    e164SanityCheck(secondNumber);
+
     return ((int64)(firstNumber & E164_COMPARISON_MASK) -
             (int64)(secondNumber & E164_COMPARISON_MASK));
 }
 
 static inline
 E164CountryCode e164CountryCodeOf (E164 theNumber)
+{
+    e164SanityCheck(theNumber);
+    return e164CountryCodeOf_no_check(theNumber);
+}
+
+static inline
+E164CountryCode e164CountryCodeOf_no_check (E164 theNumber)
 {
     return (theNumber & E164_CACHED_CC_MASK) >> E164_CC_MASK_OFFSET;
 }
@@ -99,6 +150,7 @@ E164CountryCode e164CountryCodeOf (E164 theNumber)
  */
 int countryCodeStringFromE164 (char * aString, int stringLength, E164 aNumber)
 {
+    e164SanityCheck(aNumber);
     return snprintf(aString, stringLength,
                     "%d", e164CountryCodeOf(aNumber));
 }
@@ -108,6 +160,7 @@ int countryCodeStringFromE164 (char * aString, int stringLength, E164 aNumber)
  */
 int stringFromE164 (char * aString, E164 aNumber, int stringLength)
 {
+    e164SanityCheck(aNumber);
     return snprintf(aString, stringLength,
                     "+" UINT64_FORMAT, (aNumber & E164_NUMBER_MASK));
 }
@@ -341,7 +394,7 @@ bool eachCharIsDigit(const char * aString)
 static inline
 bool e164CountryCodeIsInRange (E164CountryCode theCountryCode)
 {
-    return ((0 <= theCountryCode) && (999 >= theCountryCode));
+    return ((0 <= theCountryCode) && (E164_MAX_CC_VALUE >= theCountryCode));
 }
 
 /*
