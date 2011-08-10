@@ -208,7 +208,9 @@ country_code(PG_FUNCTION_ARGS)
     int		stringLength;
     text *	textString;
 
-    stringLength = countryCodeStringFromE164(buffer, aNumber);
+    stringLength = countryCodeStringFromE164(buffer,
+                                             E164MaximumCountryCodeLength + 1,
+                                             aNumber);
 
     textString = makeText(stringLength);
     memcpy(VARDATA(textString), buffer, stringLength);

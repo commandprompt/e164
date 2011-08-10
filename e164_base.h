@@ -143,7 +143,8 @@ const E164Type e164TypeFor[1000];
 extern E164ParseResult e164FromString (E164 * aNumber, const char * aString,
                                        E164CountryCode * aCode);
 extern int stringFromE164 (char * aString, E164 aNumber, int stringLength);
-extern int countryCodeStringFromE164 (char * aString, E164 aNumber);
+extern int countryCodeStringFromE164 (char * aString, int stringLength,
+                                      E164 aNumber);
 
 /*
  * Comparison functions

@@ -34,31 +34,25 @@
 
 /*
  * The largest possible E164 number is 999_999_999_999_999, which is
- * equal to 0x3_8d7e_a4c6_7fff.  Thus the number mask value.
+ * equal to 0x3_8D7E_A4C6_7FFF.  Thus the number mask value (50 bits.)
  *
  * The largest valid E164 number is currently 998_999_999_999_999,
  * according to this document:
  *
  * http://www.itu.int/dms_pub/itu-t/opb/sp/T-SP-E.164D-2009-PDF-E.pdf
+ *
+ * The largest possible Country Code is 999, and the closest mask to
+ * covert that is 0x3FF.
  */
-#define E164_NUMBER_MASK    UINT64CONST(0x0003FFFFFFFFFFFF)
-#define E164_CC_LENGTH_MASK UINT64CONST(0x000C000000000000)
-#define E164_NUMBER_AND_CC_LENGTH_MASK (E164_NUMBER_MASK | E164_CC_LENGTH_MASK)
-#define E164_ONE_DIGIT_CC_MASK   UINT64CONST(0x0004000000000000)
-#define E164_TWO_DIGIT_CC_MASK   UINT64CONST(0x0008000000000000)
-#define E164_THREE_DIGIT_CC_MASK UINT64CONST(0x000C000000000000)
-#define E164_CC_LENGTH_OFFSET 50
-
-#define E164_GEOGRAPHIC_AREA_MASK    UINT64CONST(0x0010000000000000)
-#define E164_GLOBAL_SERVICE_MASK     UINT64CONST(0x0020000000000000)
-#define E164_NETWORK_MASK            UINT64CONST(0x0040000000000000)
-#define E164_GROUP_OF_COUNTRIES_MASK UINT64CONST(0x0080000000000000)
+#define E164_NUMBER_MASK          UINT64CONST(0x0003FFFFFFFFFFFF)
+#define E164_CC_MASK_OFFSET       50
+#define E164_CACHED_CC_MASK       (UINT64CONST(0x3FF) << E164_CC_MASK_OFFSET)
+#define E164_COMPARISON_MASK      (E164_NUMBER_MASK | E164_CACHED_CC_MASK)
 
 /*
  * Function prototypes
  */
 static inline E164Type e164Type (E164 theNumber);
-static inline int e164CountryCodeLength (E164 aNumber);
 
 static int parseE164String (const char * aNumberString,
                             const char ** theDigits,
@@ -79,9 +73,6 @@ static inline bool eachCharIsDigit (const char * aString);
 static inline bool e164CountryCodeIsInRange (E164CountryCode theCountryCode);
 static inline void checkE164CountryCodeForRangeError (E164CountryCode theCountryCode);
 
-static inline bool isOneDigitE164CountryCode (E164CountryCode theCountryCode);
-static inline bool isTwoDigitE164CountryCode (E164CountryCode theCountryCode);
-static inline bool isThreeDigitE164CountryCode (E164CountryCode theCountryCode);
 static inline bool isUnassignedE164Type (E164Type aType);
 static inline bool isInvalidE164Type (E164Type aType);
 static inline E164Type e164TypeForCountryCode (E164CountryCode theCountryCode);
@@ -89,24 +80,23 @@ static inline E164Type e164TypeForCountryCode (E164CountryCode theCountryCode);
 /*
  * Function definitions
  */
-
 int e164Comparison (E164 firstNumber, E164 secondNumber)
 {
-    if ((firstNumber & E164_NUMBER_AND_CC_LENGTH_MASK) <
-        (secondNumber & E164_NUMBER_AND_CC_LENGTH_MASK))
+    /* TODO: what if we just subtract one from the other? */
+    if ((firstNumber & E164_COMPARISON_MASK) <
+        (secondNumber & E164_COMPARISON_MASK))
         return -1;
-    else if ((firstNumber & E164_NUMBER_AND_CC_LENGTH_MASK) ==
-             (secondNumber & E164_NUMBER_AND_CC_LENGTH_MASK))
+    else if ((firstNumber & E164_COMPARISON_MASK) ==
+             (secondNumber & E164_COMPARISON_MASK))
         return 0;
     else
         return 1;
-
-};
+}
 
 bool e164IsEqualTo (E164 firstNumber, E164 secondNumber)
 {
     return (0 == e164Comparison(firstNumber, secondNumber));
-};
+}
 
 bool e164IsNotEqualTo (E164 firstNumber, E164 secondNumber)
 {
@@ -133,23 +123,10 @@ bool e164IsGreaterThan (E164 firstNumber, E164 secondNumber)
     return (0 < e164Comparison(firstNumber, secondNumber));
 }
 
-
-/*
- * e164Type returns the E164Type of the E164 argument
- */
 static inline
-E164Type e164Type (E164 theNumber)
+E164CountryCode e164CountryCodeOf (E164 theNumber)
 {
-    if (theNumber & E164_GEOGRAPHIC_AREA_MASK)
-        return E164GeographicArea;
-    else if (theNumber & E164_GLOBAL_SERVICE_MASK)
-        return E164GlobalService;
-    else if (theNumber & E164_NETWORK_MASK)
-        return E164Network;
-    else if (theNumber & E164_GROUP_OF_COUNTRIES_MASK)
-        return E164GroupOfCountries;
-
-    elog(ERROR, "E164 value is invalid: " UINT64_FORMAT, theNumber);
+    return (theNumber & E164_CACHED_CC_MASK) >> E164_CC_MASK_OFFSET;
 }
 
 /*
@@ -157,19 +134,19 @@ E164Type e164Type (E164 theNumber)
  * the number of characters written (in this case, the number of digits in the
  * country code).
  */
-int countryCodeStringFromE164 (char * aString, E164 aNumber)
+int countryCodeStringFromE164 (char * aString, int stringLength, E164 aNumber)
 {
-    return snprintf(aString, e164CountryCodeLength(aNumber) + 1,
-                    UINT64_FORMAT, (aNumber & E164_NUMBER_MASK));
+    return snprintf(aString, stringLength,
+                    "%d", e164CountryCodeOf(aNumber));
 }
 
 /*
- * e164CountryCodeLength returns the length of the country code for an E164 number
+ * e164Type returns the E164Type of the E164 argument
  */
 static inline
-int e164CountryCodeLength (E164 aNumber)
+E164Type e164Type (E164 theNumber)
 {
-    return (int) ((aNumber & E164_CC_LENGTH_MASK) >> E164_CC_LENGTH_OFFSET);
+    return e164TypeForCountryCode(e164CountryCodeOf(theNumber));
 }
 
 /*
@@ -369,40 +346,8 @@ static inline
 void initializeE164WithCountryCode (E164 * aNumber,
                                     E164CountryCode aCountryCode)
 {
-    /*
-     * Only Geographic Areas have country codes with lengths 1 or 2.
-     */
-    if (isOneDigitE164CountryCode(aCountryCode))
-        *aNumber = E164_ONE_DIGIT_CC_MASK | E164_GEOGRAPHIC_AREA_MASK;
-    else if (isTwoDigitE164CountryCode(aCountryCode))
-        *aNumber = E164_TWO_DIGIT_CC_MASK | E164_GEOGRAPHIC_AREA_MASK;
-    else if (isThreeDigitE164CountryCode(aCountryCode))
-    {
-        uint64 typeMask = 0;
-        E164Type aType = e164TypeForCountryCode(aCountryCode);
-        switch (aType)
-        {
-            case E164GeographicArea:
-                typeMask = E164_GEOGRAPHIC_AREA_MASK;
-                break;
-            case E164GlobalService:
-                typeMask = E164_GLOBAL_SERVICE_MASK;
-                break;
-            case E164Network:
-                typeMask = E164_NETWORK_MASK;
-                break;
-            case E164GroupOfCountries:
-                typeMask = E164_GROUP_OF_COUNTRIES_MASK;
-                break;
-            default:
-                elog(ERROR, "E164Type value is invalid: %d", aType);
-        }
-        *aNumber = E164_THREE_DIGIT_CC_MASK | typeMask;
-    }
-    else
-    {
-        elog(ERROR, "E164CountryCode value is invalid: %d", aCountryCode);
-    }
+    checkE164CountryCodeForRangeError(aCountryCode);
+    *aNumber = ((uint64) aCountryCode) << E164_CC_MASK_OFFSET;
 }
 
 /*
@@ -454,36 +399,6 @@ void checkE164CountryCodeForRangeError (E164CountryCode theCountryCode)
 {
     if (!e164CountryCodeIsInRange(theCountryCode))
         elog(ERROR, "E164CountryCode value is invalid: %d", theCountryCode);
-}
-
-/*
- * isOneDigitE164CountryCode returns true if theCountryCode is a single digit
- * and false otherwise.
- */
-static inline
-bool isOneDigitE164CountryCode (E164CountryCode theCountryCode)
-{
-    return ((0 <= theCountryCode) && (9 >= theCountryCode));
-}
-
-/*
- * isTwoDigitE164CountryCode returns true if theCountryCode is two digits
- * and false otherwise.
- */
-static inline
-bool isTwoDigitE164CountryCode (E164CountryCode theCountryCode)
-{
-    return ((10 <= theCountryCode) && (99 >= theCountryCode));
-}
-
-/*
- * isThreeDigitE164CountryCode returns true if theCountryCode is three digits
- * and false otherwise.
- */
-static inline
-bool isThreeDigitE164CountryCode (E164CountryCode theCountryCode)
-{
-    return ((100 <= theCountryCode) && (999 >= theCountryCode));
 }
 
 /*
