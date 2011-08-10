@@ -149,7 +149,7 @@ extern int countryCodeStringFromE164 (char * aString, int stringLength,
 /*
  * Comparison functions
  */
-extern int e164Comparison (E164 firstNumber, E164 secondNumber);
+extern int64 e164Comparison (E164 firstNumber, E164 secondNumber);
 extern bool e164IsEqualTo (E164 firstNumber, E164 secondNumber);
 extern bool e164IsNotEqualTo (E164 firstNumber, E164 secondNumber);
 extern bool e164IsLessThan (E164 firstNumber, E164 secondNumber);

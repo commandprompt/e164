@@ -80,17 +80,10 @@ static inline E164Type e164TypeForCountryCode (E164CountryCode theCountryCode);
 /*
  * Function definitions
  */
-int e164Comparison (E164 firstNumber, E164 secondNumber)
+int64 e164Comparison (E164 firstNumber, E164 secondNumber)
 {
-    /* TODO: what if we just subtract one from the other? */
-    if ((firstNumber & E164_COMPARISON_MASK) <
-        (secondNumber & E164_COMPARISON_MASK))
-        return -1;
-    else if ((firstNumber & E164_COMPARISON_MASK) ==
-             (secondNumber & E164_COMPARISON_MASK))
-        return 0;
-    else
-        return 1;
+    return ((int64)(firstNumber & E164_COMPARISON_MASK) -
+            (int64)(secondNumber & E164_COMPARISON_MASK));
 }
 
 bool e164IsEqualTo (E164 firstNumber, E164 secondNumber)

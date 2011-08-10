@@ -270,8 +270,14 @@ PG_FUNCTION_INFO_V1(e164_cmp);
 Datum
 e164_cmp(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_INT32(e164Comparison(PG_GETARG_E164(0),
-                                   PG_GETARG_E164(1)));
+    int64 comparison = e164Comparison(PG_GETARG_E164(0),
+                                      PG_GETARG_E164(1));
+    int result = ((comparison < 0) ?
+                  -1 :
+                  ((comparison > 0) ?
+                   1 :
+                   0));
+    PG_RETURN_INT32(result);
 }
 
 PG_FUNCTION_INFO_V1(e164_hash);
