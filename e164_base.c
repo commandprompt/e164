@@ -52,8 +52,6 @@
 /*
  * Function prototypes
  */
-static inline E164Type e164Type (E164 theNumber);
-
 static int parseE164String (const char * aNumberString,
                             const char ** theDigits,
                             E164CountryCode * aCode);
@@ -63,6 +61,8 @@ static inline bool hasValidLengthForE164Type (int numberLength,
                                               E164Type aType);
 static inline void initializeE164WithCountryCode (E164 * aNumber,
                                                   E164CountryCode aCountryCode);
+
+static inline E164CountryCode e164CountryCodeOf (E164 theNumber);
 
 static inline bool isValidE164PrefixChar (char aChar);
 static inline bool stringHasValidE164Prefix (const char * aString);
@@ -131,15 +131,6 @@ int countryCodeStringFromE164 (char * aString, int stringLength, E164 aNumber)
 {
     return snprintf(aString, stringLength,
                     "%d", e164CountryCodeOf(aNumber));
-}
-
-/*
- * e164Type returns the E164Type of the E164 argument
- */
-static inline
-E164Type e164Type (E164 theNumber)
-{
-    return e164TypeForCountryCode(e164CountryCodeOf(theNumber));
 }
 
 /*
