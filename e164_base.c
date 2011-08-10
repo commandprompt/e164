@@ -158,7 +158,7 @@ int countryCodeStringFromE164 (char * aString, int stringLength, E164 aNumber)
 /*
  * stringFromE164 assigns the string representation of aNumber to aString
  */
-int stringFromE164 (char * aString, E164 aNumber, int stringLength)
+int stringFromE164 (char * aString, int stringLength, E164 aNumber)
 {
     e164SanityCheck(aNumber);
     return snprintf(aString, stringLength,

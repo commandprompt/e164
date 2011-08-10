@@ -156,7 +156,7 @@ e164_out(PG_FUNCTION_ARGS)
 {
     E164	theNumber = PG_GETARG_E164(0);
     char * theString = palloc(E164MaximumStringLength + 1);
-    (void) stringFromE164(theString, theNumber, E164MaximumStringLength + 1);
+    (void) stringFromE164(theString, E164MaximumStringLength + 1, theNumber);
     PG_RETURN_CSTRING(theString);
 }
 
@@ -189,9 +189,8 @@ e164_cast_to_text(PG_FUNCTION_ARGS)
     int		stringLength;
     text *	textString;
 
-    stringLength = stringFromE164(buffer,
-                                  theNumber,
-                                  E164MaximumStringLength + 1);
+    stringLength = stringFromE164(buffer, E164MaximumStringLength + 1,
+                                  theNumber);
 
     textString = makeText(stringLength);
     memcpy(VARDATA(textString), buffer, stringLength);
