@@ -77,6 +77,9 @@ static inline void initializeE164WithCountryCode (E164 * aNumber,
 static inline E164CountryCode e164CountryCodeOf (E164 theNumber);
 static inline E164CountryCode e164CountryCodeOf_no_check (E164 theNumber);
 
+static inline int stringFromE164_no_check (char * aString, int stringLength,
+                                           E164 aNumber);
+
 static inline bool isValidE164PrefixChar (char aChar);
 static inline bool stringHasValidE164Prefix (const char * aString);
 
@@ -99,6 +102,11 @@ static inline
 void e164SanityCheck(E164 aNumber)
 {
     E164CountryCode theCountryCode;
+#ifdef USE_ASSERT_CHECKING
+    char numberString[E164MaximumStringLength + 1];
+    E164 parsedNumber;
+    E164CountryCode parsedCountryCode;
+#endif
 
     if (0 != (aNumber & ~E164_USED_BITS_MASK))
         elog(ERROR, "unused high bits tainted in an E164 value: " UINT64_FORMAT,
@@ -113,11 +121,14 @@ void e164SanityCheck(E164 aNumber)
         elog(ERROR, "the country code in an E164 value exceeds allowed range: %d (" UINT64_FORMAT ")",
              theCountryCode, aNumber);
 
-    /* TODO: we could also check if the cached country code
-     * corresponds to the actual code in the lower bits.  That'd be
-     * too expensive for a normal run, but an Assert() would probably
-     * work.
-     */
+#ifdef USE_ASSERT_CHECKING
+    stringFromE164_no_check(numberString, E164MaximumStringLength + 1, aNumber);
+
+    Assert(E164NoParseError == e164FromString(&parsedNumber, numberString,
+                                              &parsedCountryCode));
+    Assert(parsedNumber == aNumber);
+    Assert(parsedCountryCode == theCountryCode);
+#endif
 }
 
 
@@ -161,6 +172,12 @@ int countryCodeStringFromE164 (char * aString, int stringLength, E164 aNumber)
 int stringFromE164 (char * aString, int stringLength, E164 aNumber)
 {
     e164SanityCheck(aNumber);
+    return stringFromE164_no_check(aString, stringLength, aNumber);
+}
+
+static inline
+int stringFromE164_no_check (char * aString, int stringLength, E164 aNumber)
+{
     return snprintf(aString, stringLength,
                     "+" UINT64_FORMAT, (aNumber & E164_NUMBER_MASK));
 }
