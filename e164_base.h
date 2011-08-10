@@ -146,15 +146,6 @@ extern int stringFromE164 (char * aString, E164 aNumber, int stringLength);
 extern int countryCodeStringFromE164 (char * aString, int stringLength,
                                       E164 aNumber);
 
-/*
- * Comparison functions
- */
 extern int64 e164Comparison (E164 firstNumber, E164 secondNumber);
-extern bool e164IsEqualTo (E164 firstNumber, E164 secondNumber);
-extern bool e164IsNotEqualTo (E164 firstNumber, E164 secondNumber);
-extern bool e164IsLessThan (E164 firstNumber, E164 secondNumber);
-extern bool e164IsLessThanOrEqualTo (E164 firstNumber, E164 secondNumber);
-extern bool e164IsGreaterThanOrEqualTo (E164 firstNumber, E164 secondNumber);
-extern bool e164IsGreaterThan (E164 firstNumber, E164 secondNumber);
 
 #endif /* !E164_BASE_H */

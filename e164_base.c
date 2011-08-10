@@ -86,36 +86,6 @@ int64 e164Comparison (E164 firstNumber, E164 secondNumber)
             (int64)(secondNumber & E164_COMPARISON_MASK));
 }
 
-bool e164IsEqualTo (E164 firstNumber, E164 secondNumber)
-{
-    return (0 == e164Comparison(firstNumber, secondNumber));
-}
-
-bool e164IsNotEqualTo (E164 firstNumber, E164 secondNumber)
-{
-    return (0 != e164Comparison(firstNumber, secondNumber));
-}
-
-bool e164IsLessThan (E164 firstNumber, E164 secondNumber)
-{
-    return (0 > e164Comparison(firstNumber, secondNumber));
-}
-
-bool e164IsLessThanOrEqualTo (E164 firstNumber, E164 secondNumber)
-{
-    return (0 >= e164Comparison(firstNumber, secondNumber));
-}
-
-bool e164IsGreaterThanOrEqualTo (E164 firstNumber, E164 secondNumber)
-{
-    return (0 <= e164Comparison(firstNumber, secondNumber));
-}
-
-bool e164IsGreaterThan (E164 firstNumber, E164 secondNumber)
-{
-    return (0 < e164Comparison(firstNumber, secondNumber));
-}
-
 static inline
 E164CountryCode e164CountryCodeOf (E164 theNumber)
 {

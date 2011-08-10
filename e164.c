@@ -222,48 +222,48 @@ PG_FUNCTION_INFO_V1(e164_lt);
 Datum
 e164_lt(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_BOOL(e164IsLessThan(PG_GETARG_E164(0),
-                                  PG_GETARG_E164(1)));
+    PG_RETURN_BOOL(0 > e164Comparison(PG_GETARG_E164(0),
+                                      PG_GETARG_E164(1)));
 }
 
 PG_FUNCTION_INFO_V1(e164_le);
 Datum
 e164_le(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_BOOL(e164IsLessThanOrEqualTo(PG_GETARG_E164(0),
-                                           PG_GETARG_E164(1)));
+    PG_RETURN_BOOL(0 >= e164Comparison(PG_GETARG_E164(0),
+                                       PG_GETARG_E164(1)));
 }
 
 PG_FUNCTION_INFO_V1(e164_eq);
 Datum
 e164_eq(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_BOOL(e164IsEqualTo(PG_GETARG_E164(0),
-                                 PG_GETARG_E164(1)));
+    PG_RETURN_BOOL(0 == e164Comparison(PG_GETARG_E164(0),
+                                       PG_GETARG_E164(1)));
 }
 
 PG_FUNCTION_INFO_V1(e164_ge);
 Datum
 e164_ge(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_BOOL(e164IsGreaterThanOrEqualTo(PG_GETARG_E164(0),
-                                              PG_GETARG_E164(1)));
+    PG_RETURN_BOOL(0 <= e164Comparison(PG_GETARG_E164(0),
+                                       PG_GETARG_E164(1)));
 }
 
 PG_FUNCTION_INFO_V1(e164_gt);
 Datum
 e164_gt(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_BOOL(e164IsGreaterThan(PG_GETARG_E164(0),
-                                     PG_GETARG_E164(1)));
+    PG_RETURN_BOOL(0 < e164Comparison(PG_GETARG_E164(0),
+                                      PG_GETARG_E164(1)));
 }
 
 PG_FUNCTION_INFO_V1(e164_ne);
 Datum
 e164_ne(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_BOOL(e164IsNotEqualTo(PG_GETARG_E164(0),
-                                    PG_GETARG_E164(1)));
+    PG_RETURN_BOOL(0 != e164Comparison(PG_GETARG_E164(0),
+                                       PG_GETARG_E164(1)));
 }
 
 PG_FUNCTION_INFO_V1(e164_cmp);
