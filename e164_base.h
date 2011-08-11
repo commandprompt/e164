@@ -73,7 +73,7 @@ typedef enum E164StructureLimit
 
 typedef enum E164ParseResult
 {
-    E164NoParseError = 0,
+    E164ParseOK = 0,
     E164ParseErrorBadFormat = 2,
     E164ParseErrorInvalidPrefix,
     E164ParseErrorStringTooLong,

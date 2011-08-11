@@ -124,8 +124,8 @@ void e164SanityCheck(E164 aNumber)
 #ifdef USE_ASSERT_CHECKING
     stringFromE164_no_check(numberString, E164MaximumStringLength + 1, aNumber);
 
-    Assert(E164NoParseError == e164FromString(&parsedNumber, numberString,
-                                              &parsedCountryCode));
+    Assert(E164ParseOK == e164FromString(&parsedNumber, numberString,
+                                         &parsedCountryCode));
     Assert(parsedNumber == aNumber);
     Assert(parsedCountryCode == theCountryCode);
 #endif
@@ -215,7 +215,7 @@ E164ParseResult e164FromString (E164 * aNumber, const char * aString,
     E164ParseResult e164ParseResult;
 
     e164ParseResult = parseE164String(aString, &theDigits, aCode);
-    if (E164NoParseError == e164ParseResult)
+    if (E164ParseOK == e164ParseResult)
     {
         E164 e164Result;
         char *cp;
@@ -231,7 +231,7 @@ E164ParseResult e164FromString (E164 * aNumber, const char * aString,
  * assigning the digits of the E164 number to theDigits and the
  * country code to the aCode parameter.
  *
- * parseE164String returns E164NoParseError on no error, or an error
+ * parseE164String returns E164ParseOK on no error, or an error
  * code describing the error encountered.
  */
 static
@@ -316,7 +316,7 @@ int parseE164String (const char * aNumberString,
         if (hasValidLengthForE164Type(remainderLength,
                                       numberOfCountryCodeDigits,
                                       theType))
-            return E164NoParseError;
+            return E164ParseOK;
         else
             return E164ParseErrorTypeLengthMismatch;
     }

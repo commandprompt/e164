@@ -140,7 +140,7 @@ e164_in(PG_FUNCTION_ARGS)
     E164 theNumber;
     E164CountryCode theCode;
     E164ParseResult parseResult = e164FromString(&theNumber, theString, &theCode);
-    if (E164NoParseError == parseResult)
+    if (E164ParseOK == parseResult)
     {
         PG_RETURN_E164(theNumber);
     }
