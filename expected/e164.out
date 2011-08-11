@@ -195,7 +195,8 @@ ORDER BY telephone_number;
  +35318572979     | 353
 (52 rows)
 
-SELECT telephone_number < a_telephone_number as lt
+SELECT telephone_number, a_telephone_number
+    , telephone_number < a_telephone_number as lt
     , telephone_number <= a_telephone_number as le
     , telephone_number = a_telephone_number as eq
     , telephone_number >= a_telephone_number as ge
@@ -204,60 +205,60 @@ SELECT telephone_number < a_telephone_number as lt
 FROM telephone_numbers
 CROSS JOIN (SELECT CAST('+442073779923' AS e164)) AS a(a_telephone_number)
 ORDER BY telephone_number;
- lt | le | eq | ge | gt | ne 
-----+----+----+----+----+----
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- t  | t  | f  | f  | t  | t
- f  | t  | t  | t  | t  | f
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
- f  | f  | f  | t  | f  | t
+ telephone_number | a_telephone_number | lt | le | eq | ge | gt | ne 
+------------------+--------------------+----+----+----+----+----+----
+ +12078652196     | +442073779923      | t  | t  | f  | f  | t  | t
+ +13032899913     | +442073779923      | t  | t  | f  | f  | t  | t
+ +16094926522     | +442073779923      | t  | t  | f  | f  | t  | t
+ +16158551760     | +442073779923      | t  | t  | f  | f  | t  | t
+ +17137292424     | +442073779923      | t  | t  | f  | f  | t  | t
+ +18007246269     | +442073779923      | t  | t  | f  | f  | t  | t
+ +18125224008     | +442073779923      | t  | t  | f  | f  | t  | t
+ +18162212045     | +442073779923      | t  | t  | f  | f  | t  | t
+ +18162796113     | +442073779923      | t  | t  | f  | f  | t  | t
+ +18887355977     | +442073779923      | t  | t  | f  | f  | t  | t
+ +19412583400     | +442073779923      | t  | t  | f  | f  | t  | t
+ +74956260391     | +442073779923      | t  | t  | f  | f  | t  | t
+ +74959808440     | +442073779923      | t  | t  | f  | f  | t  | t
+ +74959808441     | +442073779923      | t  | t  | f  | f  | t  | t
+ +78122326983     | +442073779923      | t  | t  | f  | f  | t  | t
+ +78122328250     | +442073779923      | t  | t  | f  | f  | t  | t
+ +78122328260     | +442073779923      | t  | t  | f  | f  | t  | t
+ +78123254044     | +442073779923      | t  | t  | f  | f  | t  | t
+ +2023366848      | +442073779923      | t  | t  | f  | f  | t  | t
+ +2034810166      | +442073779923      | t  | t  | f  | f  | t  | t
+ +20222686035     | +442073779923      | t  | t  | f  | f  | t  | t
+ +20222777000     | +442073779923      | t  | t  | f  | f  | t  | t
+ +20225912502     | +442073779923      | t  | t  | f  | f  | t  | t
+ +27114314068     | +442073779923      | t  | t  | f  | f  | t  | t
+ +27116223170     | +442073779923      | t  | t  | f  | f  | t  | t
+ +27117825226     | +442073779923      | t  | t  | f  | f  | t  | t
+ +27119491263     | +442073779923      | t  | t  | f  | f  | t  | t
+ +441223207072    | +442073779923      | t  | t  | f  | f  | t  | t
+ +441223208301    | +442073779923      | t  | t  | f  | f  | t  | t
+ +442070342900    | +442073779923      | t  | t  | f  | f  | t  | t
+ +442073779923    | +442073779923      | f  | t  | t  | t  | t  | f
+ +442085187347    | +442073779923      | f  | f  | f  | t  | f  | t
+ +442087782777    | +442073779923      | f  | f  | f  | t  | f  | t
+ +442089816811    | +442073779923      | f  | f  | f  | t  | f  | t
+ +448456032458    | +442073779923      | f  | f  | f  | t  | f  | t
+ +551150557460    | +442073779923      | f  | f  | f  | t  | f  | t
+ +552124527106    | +442073779923      | f  | f  | f  | t  | f  | t
+ +556233576049    | +442073779923      | f  | f  | f  | t  | f  | t
+ +557932173229    | +442073779923      | f  | f  | f  | t  | f  | t
+ +559132294022    | +442073779923      | f  | f  | f  | t  | f  | t
+ +81185242051     | +442073779923      | f  | f  | f  | t  | f  | t
+ +81188327353     | +442073779923      | f  | f  | f  | t  | f  | t
+ +81188361268     | +442073779923      | f  | f  | f  | t  | f  | t
+ +81188364224     | +442073779923      | f  | f  | f  | t  | f  | t
+ +81762226757     | +442073779923      | f  | f  | f  | t  | f  | t
+ +81762412341     | +442073779923      | f  | f  | f  | t  | f  | t
+ +9123692496      | +442073779923      | f  | f  | f  | t  | f  | t
+ +9126410553      | +442073779923      | f  | f  | f  | t  | f  | t
+ +9126552802      | +442073779923      | f  | f  | f  | t  | f  | t
+ +9128102290      | +442073779923      | f  | f  | f  | t  | f  | t
+ +35312121220     | +442073779923      | f  | f  | f  | t  | f  | t
+ +35318572979     | +442073779923      | f  | f  | f  | t  | f  | t
 (52 rows)
 
 CREATE INDEX telephone_number_hash_idx

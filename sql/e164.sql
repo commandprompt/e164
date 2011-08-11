@@ -81,7 +81,8 @@ SELECT telephone_number
 FROM telephone_numbers
 ORDER BY telephone_number;
 
-SELECT telephone_number < a_telephone_number as lt
+SELECT telephone_number, a_telephone_number
+    , telephone_number < a_telephone_number as lt
     , telephone_number <= a_telephone_number as le
     , telephone_number = a_telephone_number as eq
     , telephone_number >= a_telephone_number as ge
