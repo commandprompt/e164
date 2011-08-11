@@ -31,6 +31,7 @@
  */
 #include "postgres.h"
 #include "libpq/pqformat.h"
+#include "utils/builtins.h"
 #include "access/hash.h"
 #include "e164_base.h"
 
@@ -38,16 +39,6 @@
 PG_MODULE_MAGIC;
 #endif
 
-/*
- * makeText function taken from AndrewSN's ip4r
- */
-static text *
-makeText(int stringLength)
-{
-    text * textString = (text *) palloc0(stringLength + VARHDRSZ);
-    SET_VARSIZE(textString, stringLength + VARHDRSZ);
-    return textString;
-}
 
 static void
 handleE164ParseError(E164ParseResult error, const char * string,
@@ -192,8 +183,7 @@ e164_cast_to_text(PG_FUNCTION_ARGS)
     stringLength = stringFromE164(buffer, E164MaximumStringLength + 1,
                                   theNumber);
 
-    textString = makeText(stringLength);
-    memcpy(VARDATA(textString), buffer, stringLength);
+    textString = cstring_to_text_with_len(buffer, stringLength);
 
     PG_RETURN_TEXT_P(textString);
 }
@@ -211,8 +201,7 @@ country_code(PG_FUNCTION_ARGS)
                                              E164MaximumCountryCodeLength + 1,
                                              aNumber);
 
-    textString = makeText(stringLength);
-    memcpy(VARDATA(textString), buffer, stringLength);
+    textString = cstring_to_text_with_len(buffer, stringLength);
 
     PG_RETURN_TEXT_P(textString);
 }
