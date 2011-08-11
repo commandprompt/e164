@@ -90,7 +90,8 @@ handleE164ParseError(E164ParseResult error, const char * string,
                      errmsg("inconsistent length and country code for E164 number \"%s\" (country code: %d)", string, countryCode)));
             break;
         default:
-            AssertArg(false);
+            elog(ERROR, "unexpected E164 parse result error code: %d", error);
+            break;
     }
 }
 
