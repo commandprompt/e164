@@ -122,7 +122,7 @@ Datum e164_cmp(PG_FUNCTION_ARGS);
 
 Datum e164_cast_to_text(PG_FUNCTION_ARGS);
 
-Datum country_code(PG_FUNCTION_ARGS);
+Datum e164_country_code(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(e164_in);
 Datum
@@ -189,9 +189,9 @@ e164_cast_to_text(PG_FUNCTION_ARGS)
     PG_RETURN_TEXT_P(textString);
 }
 
-PG_FUNCTION_INFO_V1(country_code);
+PG_FUNCTION_INFO_V1(e164_country_code);
 Datum
-country_code(PG_FUNCTION_ARGS)
+e164_country_code(PG_FUNCTION_ARGS)
 {
     E164	aNumber = PG_GETARG_E164(0);
     char	buffer[E164MaximumCountryCodeLength + 1];
