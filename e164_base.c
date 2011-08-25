@@ -77,6 +77,10 @@ static inline void initializeE164WithCountryCode (E164 * aNumber,
 static inline E164CountryCode e164CountryCodeOf (E164 theNumber);
 static inline E164CountryCode e164CountryCodeOf_no_check (E164 theNumber);
 
+static inline void insertChar (char * aString, int stringLength, char sym, int position);
+
+static inline int rawStringFromE164_no_check (char * aString, int stringLength,
+                                              E164 aNumber);
 static inline int stringFromE164_no_check (char * aString, int stringLength,
                                            E164 aNumber);
 
@@ -122,7 +126,8 @@ void e164SanityCheck(E164 aNumber)
              theCountryCode, aNumber);
 
 #ifdef USE_ASSERT_CHECKING
-    stringFromE164_no_check(numberString, E164MaximumStringLength + 1, aNumber);
+    rawStringFromE164_no_check(numberString, E164MaximumStringLength + 1,
+                               aNumber);
 
     Assert(E164ParseOK == e164FromString(&parsedNumber, numberString,
                                          &parsedCountryCode));
@@ -166,6 +171,18 @@ int countryCodeStringFromE164 (char * aString, int stringLength, E164 aNumber)
                     "%d", e164CountryCodeOf(aNumber));
 }
 
+static inline
+void insertChar (char * aString, int stringLength, char sym, int position)
+{
+    Assert(stringLength >= 0);
+    Assert(position >= 0);
+    Assert(position < stringLength);
+
+    memmove(aString + position + 1, aString + position,
+            stringLength - position + 1);
+    aString[position] = sym;
+}
+
 /*
  * stringFromE164 assigns the string representation of aNumber to aString
  */
@@ -175,11 +192,112 @@ int stringFromE164 (char * aString, int stringLength, E164 aNumber)
     return stringFromE164_no_check(aString, stringLength, aNumber);
 }
 
+int rawStringFromE164 (char * aString, int stringLength, E164 aNumber)
+{
+    e164SanityCheck(aNumber);
+    return rawStringFromE164_no_check(aString, stringLength, aNumber);
+}
+
 static inline
-int stringFromE164_no_check (char * aString, int stringLength, E164 aNumber)
+int rawStringFromE164_no_check (char * aString, int stringLength, E164 aNumber)
 {
     return snprintf(aString, stringLength,
                     "+" UINT64_FORMAT, (aNumber & E164_NUMBER_MASK));
+}
+
+/*
+ * Insert spaces into the rest of the phone number digits, to
+ * group them in packs of 4 from the tail, wherever possible,
+ * otherwise try to group in packs of 3.
+ *
+ * The resulting tail looks like this in the most general case:
+ *
+ * +CC (AC) 12 345 6789
+ */
+static const char * format_patterns[15] = {
+    "", /* padding, never used */
+    "x",
+    "xx",
+    "xxx",
+    "xxxx",
+    "xx xxx",
+    "xxx xxx",
+    "xxx xxxx",
+    "xxxx xxxx",
+    "xx xxx xxxx",
+    "xxx xxx xxxx",
+    "xxx xxxx xxxx",
+    "xxxx xxxx xxxx",
+    "xx xxx xxxx xxxx",
+    "xxx xxx xxxx xxxx"
+};
+
+static inline
+int stringFromE164_no_check (char * aString, int stringLength, E164 aNumber)
+{
+    char buffer[E164MaximumStringLength + 1];
+    char temp[E164MaximumStringLength + 1];
+    int n = rawStringFromE164_no_check(buffer, sizeof(buffer), aNumber);
+
+    int len;
+    char * pos;
+    char * tpos;
+    const char * pattern;
+
+    E164CountryCode countryCode = e164CountryCodeOf_no_check(aNumber);
+
+    /* Country Code length */
+    int ccl = (countryCode < 10) ? 1 : ((countryCode < 100) ? 2 : 3);
+
+    /* Area Code length */
+    int acl = 0; /* TODO: determine from country code and NSN */
+
+    /* Copy the prefix and country code to temp buffer. */
+    len = E164PrefixStringLength + ccl;
+    memcpy((tpos = temp), (pos = buffer), len);
+    pos += len;
+    tpos += len;
+    *(tpos++) = ' ';
+
+    /*
+     * Check if there's enough digits for the area code and the rest
+     * of the number.
+     */
+    if (len + acl >= n)
+        elog(ERROR, "no digits follow the area code in an E164 number: "
+             UINT64_FORMAT, (aNumber & E164_NUMBER_MASK));
+
+    if (acl > 0) {
+        *(tpos++) = '(';
+        memcpy(tpos, pos, acl);
+        pos += acl;
+        tpos += acl;
+        *(tpos++) = ')';
+        *(tpos++) = ' ';
+    }
+
+    /* Format the rest according to a pre-defined format pattern. */
+    len = (buffer + n) - pos;
+    if (len >= 15)
+        elog(ERROR, "trailing digits found in an E164 number: " UINT64_FORMAT,
+             (aNumber & E164_NUMBER_MASK));
+
+    for (pattern = format_patterns[len]; ; ++pattern) {
+        if (*pattern == 'x')
+            *(tpos++) = *(pos++);
+        else
+            *(tpos++) = *pattern;
+
+        if (!*pattern) /* if we've just copied the the null byte */
+            break;
+    }
+
+    strncpy(aString, temp, stringLength);
+    /*
+     * Return actual length required for formatting the number, so the
+     * caller have a chance to adjust the passed buffer size.
+     */
+    return tpos - temp;
 }
 
 /*
@@ -247,7 +365,7 @@ int parseE164String (const char * aNumberString,
     /*
      * Make sure string doesn't exceed maximum length
      */
-    if (E164MaximumStringLength < stringLength)
+    if (E164MaximumRawStringLength < stringLength)
         return E164ParseErrorStringTooLong;
     if (E164MinimumStringLength > stringLength)
         return E164ParseErrorStringTooShort;

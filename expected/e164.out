@@ -7,8 +7,9 @@ psql:e164.sql:17: NOTICE:  CREATE TABLE / UNIQUE will create implicit index "inf
 psql:e164.sql:24: NOTICE:  type "e164" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:e164.sql:29: NOTICE:  argument type e164 is only a shell
-psql:e164.sql:34: NOTICE:  return type e164 is only a shell
-psql:e164.sql:39: NOTICE:  argument type e164 is only a shell
+psql:e164.sql:34: NOTICE:  argument type e164 is only a shell
+psql:e164.sql:39: NOTICE:  return type e164 is only a shell
+psql:e164.sql:44: NOTICE:  argument type e164 is only a shell
 \set VERBOSITY terse
 SET SEARCH_PATH to public, e164;
 CREATE TABLE telephone_numbers
@@ -17,11 +18,11 @@ CREATE TABLE telephone_numbers
 );
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "telephone_numbers_pkey" for table "telephone_numbers"
 COPY telephone_numbers (telephone_number) FROM STDIN;
-SELECT *
+SELECT e164_raw(telephone_number)
 FROM telephone_numbers
 ORDER BY telephone_number;
- telephone_number 
-------------------
+   e164_raw    
+---------------
  +12078652196
  +13032899913
  +16094926522
@@ -76,11 +77,11 @@ ORDER BY telephone_number;
  +35318572979
 (52 rows)
 
-SELECT *
+SELECT e164_raw(telephone_number)
 FROM telephone_numbers
 ORDER BY CAST(telephone_number AS text);
- telephone_number 
-------------------
+   e164_raw    
+---------------
  +12078652196
  +13032899913
  +16094926522
@@ -135,11 +136,11 @@ ORDER BY CAST(telephone_number AS text);
  +9128102290
 (52 rows)
 
-SELECT telephone_number
+SELECT e164_raw(telephone_number) as raw_phone_number
     , country_code(telephone_number)
 FROM telephone_numbers
 ORDER BY telephone_number;
- telephone_number | country_code 
+ raw_phone_number | country_code 
 ------------------+--------------
  +12078652196     | 1
  +13032899913     | 1
@@ -195,7 +196,8 @@ ORDER BY telephone_number;
  +35318572979     | 353
 (52 rows)
 
-SELECT telephone_number, a_telephone_number
+SELECT e164_raw(telephone_number) as raw_phone_number
+    , e164_raw(a_telephone_number) as a_raw_phone_number
     , telephone_number < a_telephone_number as lt
     , telephone_number <= a_telephone_number as le
     , telephone_number = a_telephone_number as eq
@@ -205,7 +207,7 @@ SELECT telephone_number, a_telephone_number
 FROM telephone_numbers
 CROSS JOIN (SELECT CAST('+442073779923' AS e164)) AS a(a_telephone_number)
 ORDER BY telephone_number;
- telephone_number | a_telephone_number | lt | le | eq | ge | gt | ne 
+ raw_phone_number | a_raw_phone_number | lt | le | eq | ge | gt | ne 
 ------------------+--------------------+----+----+----+----+----+----
  +12078652196     | +442073779923      | t  | t  | f  | f  | t  | t
  +13032899913     | +442073779923      | t  | t  | f  | f  | t  | t
@@ -310,24 +312,24 @@ ERROR:  string too short "+1" at character 13
 SELECT CAST('+11' AS e164);
  e164 
 ------
- +11
+ +1 1
 (1 row)
 
 -- These should raise no subscriber number digit errors
 SELECT CAST('+81' AS e164);
 ERROR:  no subscriber number digits in E164 number "+81" at character 13
 SELECT CAST('+811' AS e164); -- okay
- e164 
-------
- +811
+ e164  
+-------
+ +81 1
 (1 row)
 
 SELECT CAST('+220' AS e164);
 ERROR:  no subscriber number digits in E164 number "+220" at character 13
 SELECT CAST('+2201' AS e164); -- okay
- e164  
--------
- +2201
+  e164  
+--------
+ +220 1
 (1 row)
 
 -- Global Service: minimum 1 digit
@@ -336,15 +338,15 @@ ERROR:  no subscriber number digits in E164 number "+800" at character 13
 SELECT CAST('+808' AS e164);
 ERROR:  no subscriber number digits in E164 number "+808" at character 13
 SELECT CAST('+8001' AS e164); -- okay
- e164  
--------
- +8001
+  e164  
+--------
+ +800 1
 (1 row)
 
 SELECT CAST('+8081' AS e164); -- okay
- e164  
--------
- +8081
+  e164  
+--------
+ +808 1
 (1 row)
 
 -- Inconsistent Group of Countries and Network numbers should raise
@@ -353,40 +355,40 @@ SELECT CAST('+8081' AS e164); -- okay
 SELECT CAST('+3881' AS e164);
 ERROR:  inconsistent length and country code for E164 number "+3881" (country code: 388) at character 13
 SELECT CAST('+38812' AS e164); -- okay
-  e164  
---------
- +38812
+  e164   
+---------
+ +388 12
 (1 row)
 
 SELECT CAST('+3882' AS e164);
 ERROR:  inconsistent length and country code for E164 number "+3882" (country code: 388) at character 13
 SELECT CAST('+38822' AS e164); -- okay
-  e164  
---------
- +38822
+  e164   
+---------
+ +388 22
 (1 row)
 
 -- Network: minimum 2 digits
 SELECT CAST('+8701' AS e164);
 ERROR:  inconsistent length and country code for E164 number "+8701" (country code: 870) at character 13
 SELECT CAST('+87019' AS e164); -- okay
-  e164  
---------
- +87019
+  e164   
+---------
+ +870 19
 (1 row)
 
 SELECT CAST('+8711' AS e164);
 ERROR:  inconsistent length and country code for E164 number "+8711" (country code: 871) at character 13
 SELECT CAST('+87119' AS e164); -- okay
-  e164  
---------
- +87119
+  e164   
+---------
+ +871 19
 (1 row)
 
 -- Full 15 digits
 SELECT CAST('+998999999999999' AS e164); -- okay
-       e164       
-------------------
- +998999999999999
+        e164         
+---------------------
+ +998 9999 9999 9999
 (1 row)
 

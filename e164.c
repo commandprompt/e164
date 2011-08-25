@@ -106,6 +106,7 @@ handleE164ParseError(E164ParseResult error, const char * string,
 
 Datum e164_in(PG_FUNCTION_ARGS);
 Datum e164_out(PG_FUNCTION_ARGS);
+Datum e164_raw(PG_FUNCTION_ARGS);
 
 Datum e164_hash(PG_FUNCTION_ARGS);
 Datum e164_send(PG_FUNCTION_ARGS);
@@ -149,6 +150,16 @@ e164_out(PG_FUNCTION_ARGS)
     E164	theNumber = PG_GETARG_E164(0);
     char * theString = palloc(E164MaximumStringLength + 1);
     (void) stringFromE164(theString, E164MaximumStringLength + 1, theNumber);
+    PG_RETURN_CSTRING(theString);
+}
+
+PG_FUNCTION_INFO_V1(e164_raw);
+Datum
+e164_raw(PG_FUNCTION_ARGS)
+{
+    E164	theNumber = PG_GETARG_E164(0);
+    char * theString = palloc(E164MaximumStringLength + 1);
+    (void) rawStringFromE164(theString, E164MaximumStringLength + 1, theNumber);
     PG_RETURN_CSTRING(theString);
 }
 

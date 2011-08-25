@@ -40,11 +40,15 @@ typedef enum E164StructureLimit
 {
     E164MaximumNumberOfDigits = 15,
     E164PrefixStringLength    = 1,      /* = strlen(E164_PREFIX) */
+
+    E164MaximumRawStringLength = E164MaximumNumberOfDigits + E164PrefixStringLength,
+/* Note this does *not* include the string terminator */
 /*
- * E164MaxStringLength        = E164MaximumNumberOfDigits + E164PrefixStringLength
- * Note this does *not* include the string terminator
+ * There may be two parens symbols for the area code, plus up to 4
+ * space symbols in a formatted E164 number, thus +6 to the raw number
+ * string length.
  */
-    E164MaximumStringLength   = 16,
+    E164MaximumStringLength   = E164MaximumRawStringLength + 6,
 /*
  * E164MinimumStringLength is pretty conservative:
  * prefix (1) + country code (1) + subscriber number (1)
@@ -143,6 +147,7 @@ const E164Type e164TypeFor[1000];
 extern E164ParseResult e164FromString (E164 * aNumber, const char * aString,
                                        E164CountryCode * aCode);
 extern int stringFromE164 (char * aString, int stringLength, E164 aNumber);
+extern int rawStringFromE164 (char * aString, int stringLength, E164 aNumber);
 extern int countryCodeStringFromE164 (char * aString, int stringLength,
                                       E164 aNumber);
 

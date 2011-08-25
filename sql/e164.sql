@@ -68,20 +68,21 @@ COPY telephone_numbers (telephone_number) FROM STDIN;
 +78123254044
 \.
 
-SELECT *
+SELECT e164_raw(telephone_number)
 FROM telephone_numbers
 ORDER BY telephone_number;
 
-SELECT *
+SELECT e164_raw(telephone_number)
 FROM telephone_numbers
 ORDER BY CAST(telephone_number AS text);
 
-SELECT telephone_number
+SELECT e164_raw(telephone_number) as raw_phone_number
     , country_code(telephone_number)
 FROM telephone_numbers
 ORDER BY telephone_number;
 
-SELECT telephone_number, a_telephone_number
+SELECT e164_raw(telephone_number) as raw_phone_number
+    , e164_raw(a_telephone_number) as a_raw_phone_number
     , telephone_number < a_telephone_number as lt
     , telephone_number <= a_telephone_number as le
     , telephone_number = a_telephone_number as eq
