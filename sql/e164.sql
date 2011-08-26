@@ -165,6 +165,43 @@ SELECT CAST('+87119' AS e164); -- okay
 -- Full 15 digits
 SELECT CAST('+998999999999999' AS e164); -- okay
 
+-- Formatted numbers parsing
+-- Normal
+SELECT CAST('+1 (23) 456' AS e164); -- okay
+SELECT CAST('+1(23)456' AS e164); -- okay
+-- Garbage in text
+SELECT CAST('+1a23 456' AS e164);
+-- 'Bogus' country code
+SELECT CAST('+123 456' AS e164); -- okay
+-- Country code 'exceeding' allowed range
+SELECT CAST('+1234 56' AS e164); -- okay
+-- Trailing paren
+SELECT CAST('+1 (23)' AS e164);
+-- 'Misplaced' area code parens
+SELECT CAST('+1 23 (456) 789' AS e164); -- okay
+-- 'Misplaced' area code parens, again
+SELECT CAST('+1 23(456) 789' AS e164); -- okay
+-- Leading paren
+SELECT CAST('+(1) 23' AS e164);
+-- Double parens
+SELECT CAST('+1 (23) (456)' AS e164);
+-- Mismatched parens
+SELECT CAST('+1 ((' AS e164);
+-- Empty parens
+SELECT CAST('+1 ()' AS e164);
+-- Extra space before paren
+SELECT CAST('+1 ( 23) 456' AS e164); -- okay
+-- Space inside parens
+SELECT CAST('+1 (2 3) 456' AS e164); -- okay
+-- Right paren first
+SELECT CAST('+1 )23) 456' AS e164);
+-- Leading space
+SELECT CAST('+ 1 23 456' AS e164); -- okay
+-- Trailing space
+SELECT CAST('+1 23 456 ' AS e164);
+-- Extra inner space
+SELECT CAST('+1  23 456' AS e164); -- okay
+
 -- The Christmas tree formatting test
 SELECT CAST('+12' AS e164);
 SELECT CAST('+123' AS e164);
