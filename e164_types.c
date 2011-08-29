@@ -31,7 +31,7 @@
  */
 #include "e164_base.h"
 
-const E164Type e164TypeFor[1000] = {
+const int e164TypeFor[1000] = {
     /* 0..9 */
     E164Reserved, E164GeographicArea, E164Invalid, E164Invalid, E164Invalid,
     E164Invalid, E164Invalid, E164GeographicArea, E164Invalid, E164Invalid,
@@ -48,7 +48,7 @@ const E164Type e164TypeFor[1000] = {
     E164GeographicArea, E164GeographicArea, E164Invalid, E164GeographicArea, E164GeographicArea,
     E164GeographicArea, E164GeographicArea, E164GeographicArea, E164GeographicArea, E164GeographicArea,
     /* 50..59 */
-    E164GeographicArea, E164GeographicArea, E164GeographicArea, E164GeographicArea, E164GeographicArea,
+    E164Invalid, E164GeographicArea, E164GeographicArea, E164GeographicArea, E164GeographicArea,
     E164GeographicArea, E164GeographicArea, E164GeographicArea, E164GeographicArea, E164Invalid,
     /* 60..69 */
     E164GeographicArea, E164GeographicArea, E164GeographicArea, E164GeographicArea, E164GeographicArea,
@@ -149,7 +149,7 @@ const E164Type e164TypeFor[1000] = {
     E164GeographicArea, E164GeographicArea, E164GeographicArea, E164GeographicArea, E164GeographicArea,
     E164GeographicArea, E164GeographicArea, E164GeographicArea, E164GeographicArea, E164GeographicArea,
     /* 380..389 */
-    E164GeographicArea, E164GeographicArea, E164SpareWithoutNote, E164SpareWithoutNote, E164SpareWithoutNote,
+    E164GeographicArea, E164GeographicArea, E164GeographicArea, E164SpareWithoutNote, E164SpareWithoutNote,
     E164GeographicArea, E164GeographicArea, E164GeographicArea, E164GroupOfCountries, E164GeographicArea,
     /* 390..399 */
     E164Invalid, E164Invalid, E164Invalid, E164Invalid, E164Invalid,
@@ -304,8 +304,8 @@ const E164Type e164TypeFor[1000] = {
     E164Network, E164Network, E164Network, E164Network, E164Reserved,
     E164Reserved, E164Reserved, E164Reserved, E164GlobalService, E164Reserved,
     /* 880..889 */
-    E164GeographicArea, E164Network, E164Network, E164SpareWithoutNote, E164SpareWithoutNote,
-    E164SpareWithoutNote, E164Reserved, E164SpareWithoutNote, E164Reserved, E164SpareWithoutNote,
+    E164GeographicArea, E164Network, E164Network, E164SpareWithNote, E164SpareWithoutNote,
+    E164SpareWithoutNote, E164GeographicArea, E164SpareWithoutNote, E164GlobalService, E164SpareWithoutNote,
     /* 890..899 */
     E164SpareWithNote, E164SpareWithNote, E164SpareWithNote, E164SpareWithNote, E164SpareWithNote,
     E164SpareWithNote, E164SpareWithNote, E164SpareWithNote, E164SpareWithNote, E164SpareWithNote,
