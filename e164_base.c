@@ -247,7 +247,8 @@ int stringFromE164_no_check (char * aString, int stringLength, E164 aNumber)
         elog(ERROR, "no digits follow the area code in an E164 number: "
              UINT64_FORMAT, (aNumber & E164_NUMBER_MASK));
 
-    if (acl > 0) {
+    if (acl > 0)
+    {
         *(tpos++) = '(';
         memcpy(tpos, pos, acl);
         pos += acl;
@@ -262,7 +263,8 @@ int stringFromE164_no_check (char * aString, int stringLength, E164 aNumber)
         elog(ERROR, "trailing digits found in an E164 number: " UINT64_FORMAT,
              (aNumber & E164_NUMBER_MASK));
 
-    for (pattern = format_patterns[len]; ; ++pattern) {
+    for (pattern = format_patterns[len]; ; ++pattern)
+    {
         if (*pattern == 'x')
             *(tpos++) = *(pos++);
         else
