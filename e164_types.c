@@ -31,7 +31,7 @@
  */
 #include "e164_base.h"
 
-const int e164TypeFor[1000] = {
+const E164Type e164TypeFor[1000] = {
     /* 0..9 */
     E164Reserved, E164GeographicArea, E164Invalid, E164Invalid, E164Invalid,
     E164Invalid, E164Invalid, E164GeographicArea, E164Invalid, E164Invalid,
