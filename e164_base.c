@@ -64,19 +64,12 @@
  */
 static inline void e164SanityCheck(E164 aNumber);
 
-static inline E164ParseResult parseFormattedNumber (const char * aString,
-                                                    uint64 * aNumber,
-                                                    E164CountryCode * aCountryCode,
-                                                    E164Type * aType,
-                                                    int * numberOfDigits);
 static inline bool hasValidLengthForE164Type (int numberLength,
                                               int countryCodeLength,
                                               E164Type aType);
 
 static inline E164CountryCode e164CountryCodeOf (E164 theNumber);
 static inline E164CountryCode e164CountryCodeOf_no_check (E164 theNumber);
-
-static inline void insertChar (char * aString, int stringLength, char sym, int position);
 
 static inline int rawStringFromE164_no_check (char * aString, int stringLength,
                                               E164 aNumber);
@@ -85,9 +78,6 @@ static inline int stringFromE164_no_check (char * aString, int stringLength,
 
 static inline bool isValidE164PrefixChar (char aChar);
 static inline bool stringHasValidE164Prefix (const char * aString);
-
-static inline bool isEndOfString (const char * theChar);
-static inline bool eachCharIsDigit (const char * aString);
 
 static inline bool e164CountryCodeIsInRange (E164CountryCode theCountryCode);
 static inline void checkE164CountryCodeForRangeError (E164CountryCode theCountryCode);
@@ -110,11 +100,6 @@ static inline
 void e164SanityCheck(E164 aNumber)
 {
     E164CountryCode theCountryCode;
-#ifdef USE_ASSERT_CHECKING
-    char numberString[E164MaximumStringLength + 1];
-    E164 parsedNumber;
-    E164CountryCode parsedCountryCode;
-#endif
 
     if (0 != (aNumber & ~E164_USED_BITS_MASK))
         elog(ERROR, "unused high bits tainted in an E164 value: " UINT64_FORMAT,
@@ -134,13 +119,12 @@ void e164SanityCheck(E164 aNumber)
              theCountryCode, aNumber);
 
 #ifdef USE_ASSERT_CHECKING
-    rawStringFromE164_no_check(numberString, E164MaximumStringLength + 1,
-                               aNumber);
-
-    Assert(E164ParseOK == e164FromString(&parsedNumber, numberString,
-                                         &parsedCountryCode));
-    Assert(parsedNumber == aNumber);
-    Assert(parsedCountryCode == theCountryCode);
+    {
+        char numberString[E164MaximumStringLength + 1];
+        rawStringFromE164_no_check(numberString, sizeof(numberString),
+                                   aNumber);
+        Assert(e164FromString(numberString) == aNumber);
+    }
 #endif
 }
 
@@ -177,18 +161,6 @@ int countryCodeStringFromE164 (char * aString, int stringLength, E164 aNumber)
     e164SanityCheck(aNumber);
     return snprintf(aString, stringLength,
                     "%d", e164CountryCodeOf(aNumber));
-}
-
-static inline
-void insertChar (char * aString, int stringLength, char sym, int position)
-{
-    Assert(stringLength >= 0);
-    Assert(position >= 0);
-    Assert(position < stringLength);
-
-    memmove(aString + position + 1, aString + position,
-            stringLength - position + 1);
-    aString[position] = sym;
 }
 
 /*
@@ -333,73 +305,11 @@ bool stringHasValidE164Prefix (const char * aString)
  * assigns to its first argument the E164 value represented
  * by the string. If the assignment is successful, e164FromString
  * returns true, and false otherwise.
- */
-E164ParseResult e164FromString (E164 * aNumber, const char * aString,
-                                E164CountryCode * aCode)
-{
-    E164ParseResult result;
-    const int stringLength = strlen(aString);
-    E164CountryCode aCountryCode = 0;
-    int numberOfCountryCodeDigits;
-    int totalNumberOfDigits;
-    E164Type theType = E164Invalid;
-    /*
-     * Make sure string doesn't exceed maximum length
-     */
-    if (E164MinimumStringLength > stringLength)
-        return E164ParseErrorStringTooShort;
-    /*
-     * Check for a valid E164 prefix
-     */
-    if (!stringHasValidE164Prefix(aString))
-        return E164ParseErrorInvalidPrefix;
-
-    /* Advance past prefix */
-    aString += E164PrefixStringLength;
-
-    result = parseFormattedNumber(aString, aNumber, &aCountryCode,
-                                  &theType, &totalNumberOfDigits);
-    if (E164ParseOK != result)
-        return result;
-
-    /*
-     * Assign country code.
-     * If it's invalid, it'll be used in the error message.
-     */
-    *aCode = aCountryCode;
-    if (isInvalidE164Type(theType))
-        return E164ParseErrorInvalidType;
-    else if (isUnassignedE164Type(theType))
-        return E164ParseErrorUnassignedType;
-
-    numberOfCountryCodeDigits = countryCodeLengthOf(aCountryCode);
-    /*
-     * Need some digits for the subscriber number
-     */
-    if (totalNumberOfDigits <= numberOfCountryCodeDigits)
-        return E164ParseErrorNoSubscriberNumberDigits;
-
-    /*
-     * Check number against E164Type
-     * This tests against absolute (and unrealistic) minimums.
-     * See comment regarding minimum Subscriber Number lengths
-     */
-    if (!hasValidLengthForE164Type(totalNumberOfDigits,
-                                   numberOfCountryCodeDigits,
-                                   theType))
-        return E164ParseErrorTypeLengthMismatch;
-
-    *aNumber |= (((uint64) aCountryCode) << E164_CC_MASK_OFFSET);
-
-    return E164ParseOK;
-}
-
-/*
- * parseFormattedNumber tries to parse the phone number string which
- * may contain spaces and/or parens of the following general format
- * (no leading E164 prefix symbol '+'):
  *
- * 1 (234) 567 8901
+ * It tries to parse the phone number string which may contain
+ * optional spaces and/or parens of the following general format:
+ *
+ * +1 (234) 567 8901
  *
  * The string is treated as if there were no non-digit symbols, and a
  * few simple rules are enforced on the placement of non-digits:
@@ -412,63 +322,129 @@ E164ParseResult e164FromString (E164 * aNumber, const char * aString,
  * well as its type.  Since no country code may be a prefix of another
  * (longer) country code, the first valid value is thought to be the
  * country code of a parsed number.
+ *
+ * TODO: consider dashes also
  */
-/* TODO: consider dashes also */
-static inline
-E164ParseResult parseFormattedNumber (const char * aString,
-                                      uint64 * aNumber,
-                                      E164CountryCode * aCountryCode,
-                                      E164Type * aType,
-                                      int * numberOfDigits)
+E164 e164FromString (const char * aString)
 {
-    uint64 theNumber = 0;
+    const int stringLength = strlen(aString);
+    E164 theNumber = 0;
     E164CountryCode theCountryCode = 0;
+    int totalNumberOfDigits = 0;
+    int numberOfCountryCodeDigits = 0;
     E164Type theType = E164Invalid;
-    const char * p = aString;
+    const char * currChar;
     char prevChar = 0;
-    bool lparen = false;
-    bool rparen = false;
-    int digitCount = 0;
-    for (; *p; prevChar = *(p++))
+    bool leftParen = false;
+    bool rightParen = false;
+
+    /*
+     * Make sure string doesn't exceed maximum length
+     */
+    if (E164MinimumStringLength > stringLength)
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("string too short \"%s\"", aString),
+                 errhint("E164 numbers must have at least %d digits.",
+                         E164MinimumNumberOfDigits)));
+
+    /*
+     * Check for a valid E164 prefix
+     */
+    if (!stringHasValidE164Prefix(aString))
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("invalid E164 prefix: \"%s\"", aString),
+                 errhint("E164 numbers must begin with \"%c\".", E164_PREFIX)));
+
+    for (currChar = aString + E164PrefixStringLength;
+         *currChar;
+         prevChar = *(currChar++))
     {
-        if (isdigit(*p))
+        if (isdigit(*currChar))
         {
-            if (++digitCount > E164MaximumNumberOfDigits)
-                return E164ParseErrorStringTooLong;
+            if (++totalNumberOfDigits > E164MaximumNumberOfDigits)
+                ereport(ERROR,
+                        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                         errmsg("string too long: \"%s\"", aString),
+                         errhint("E164 values must have at most %d digits.",
+                                 E164MaximumNumberOfDigits)));
+
             theNumber *= 10;
-            theNumber += (*p - '0');
+            theNumber += (*currChar - '0');
             if (isInvalidE164Type(theType))
             {
                 theCountryCode = theNumber;
                 theType = e164TypeForCountryCode(theCountryCode);
+                numberOfCountryCodeDigits = totalNumberOfDigits;
             }
         }
-        else if (*p == '(')
+        else if (*currChar == '(')
         {
             /* Forbid second left paren or leading paren */
-            if (lparen || !prevChar)
-                return E164ParseErrorBadFormat;
-            lparen = true;
+            if (leftParen || !prevChar)
+                goto bad_format;
+            leftParen = true;
         }
-        else if (*p == ')')
+        else if (*currChar == ')')
         {
             /* Check parens balance, forbid empty parens */
-            if (!lparen || rparen || prevChar == '(')
-                return E164ParseErrorBadFormat;
-            rparen = true;
+            if (!leftParen || rightParen || prevChar == '(')
+                goto bad_format;
+            rightParen = true;
         }
-        else if (!isspace(*p))
-            return E164ParseErrorBadFormat;
+        else if (!isspace(*currChar))
+            goto bad_format;
     }
     /* Forbid trailing space or paren */
     if (!isdigit(prevChar))
-        return E164ParseErrorBadFormat;
+        goto bad_format;
 
-    *aNumber = theNumber;
-    *aCountryCode = theCountryCode;
-    *aType = theType;
-    *numberOfDigits = digitCount;
-    return E164ParseOK;
+    /*
+     * Assign country code.
+     * If it's invalid, it'll be used in the error message.
+     */
+    if (isInvalidE164Type(theType))
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("invalid E164 country code for E164 number \"%s\": %d",
+                        aString, theCountryCode)));
+
+    if (isUnassignedE164Type(theType))
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("unassigned country code for E164 number \"%s\": %d",
+                        aString, theCountryCode)));
+
+    /*
+     * Need some digits for the subscriber number
+     */
+    if (totalNumberOfDigits <= numberOfCountryCodeDigits)
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("no subscriber number digits in E164 number \"%s\"",
+                        aString)));
+
+    /*
+     * Check number against E164Type
+     * This tests against absolute (and unrealistic) minimums.
+     * See comment regarding minimum Subscriber Number lengths
+     */
+    if (!hasValidLengthForE164Type(totalNumberOfDigits,
+                                   numberOfCountryCodeDigits,
+                                   theType))
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("inconsistent length and country code for E164 number \"%s\" (country code: %d)", aString, theCountryCode)));
+
+    return (theNumber | (((uint64) theCountryCode) << E164_CC_MASK_OFFSET));
+
+bad_format:
+    ereport(ERROR,
+            (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+             errmsg("invalid E164 number format: \"%s\"", aString),
+             errhint("E164 numbers begin with a \"+\" followed by digits.")));
+    return 0; /* keep compiler quiet */
 }
 
 /*
@@ -507,36 +483,6 @@ bool hasValidLengthForE164Type (int numberLength,
 
     elog(ERROR, "E164Type value is invalid: %d", aType);
     return false; /* keep compiler quiet */
-}
-
-/*
- * isEndOfString determines if the argument is the end of string character
- */
-static inline
-bool isEndOfString (const char * theChar)
-{
-    return ('\0' == *theChar);
-}
-
-/*
- * eachCharIsDigit returns true if every character of aString is a digit,
- * and false otherwise.
- */
-static inline
-bool eachCharIsDigit(const char * aString)
-{
-    const char * theChar = aString;
-    bool isAllDigits = true;
-    while (!isEndOfString(theChar))
-    {
-        if (!isdigit(*theChar))
-        {
-            isAllDigits = false;
-            break;
-        }
-        theChar++;
-    }
-    return isAllDigits;
 }
 
 /*

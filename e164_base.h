@@ -75,19 +75,6 @@ typedef enum E164StructureLimit
     E164GroupOfCountriesMinimumSubscriberNumberLength = 2
 } E164StructureLimit;
 
-typedef enum E164ParseResult
-{
-    E164ParseOK = 0,
-    E164ParseErrorBadFormat = 2,
-    E164ParseErrorInvalidPrefix,
-    E164ParseErrorStringTooLong,
-    E164ParseErrorStringTooShort,
-    E164ParseErrorInvalidType,
-    E164ParseErrorNoSubscriberNumberDigits,
-    E164ParseErrorUnassignedType,
-    E164ParseErrorTypeLengthMismatch
-} E164ParseResult;
-
 typedef int4 E164CountryCode;
 typedef uint64 E164;
 
@@ -144,8 +131,7 @@ static const char * e164TypeName[] = {
 
 const E164Type e164TypeFor[1000];
 
-extern E164ParseResult e164FromString (E164 * aNumber, const char * aString,
-                                       E164CountryCode * aCode);
+extern E164 e164FromString (const char * aString);
 extern int stringFromE164 (char * aString, int stringLength, E164 aNumber);
 extern int rawStringFromE164 (char * aString, int stringLength, E164 aNumber);
 extern int countryCodeStringFromE164 (char * aString, int stringLength,

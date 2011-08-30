@@ -39,62 +39,6 @@
 PG_MODULE_MAGIC;
 #endif
 
-
-static void
-handleE164ParseError(E164ParseResult error, const char * string,
-                     E164CountryCode countryCode)
-{
-    switch (error) {
-        case E164ParseErrorBadFormat:
-            ereport(ERROR,
-                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("invalid E164 number format: \"%s\"", string),
-                     errhint("E164 numbers begin with a \"+\" followed by digits.")));
-            break;
-        case E164ParseErrorInvalidPrefix:
-            ereport(ERROR,
-                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("invalid E164 prefix: \"%s\"", string),
-                     errhint("E164 numbers must begin with \"%c\".", E164_PREFIX)));
-            break;
-        case E164ParseErrorStringTooLong:
-            ereport(ERROR,
-                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("string too long: \"%s\"", string),
-                     errhint("E164 values must have at most %d digits.", E164MaximumNumberOfDigits)));
-            break;
-        case E164ParseErrorStringTooShort:
-            ereport(ERROR,
-                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("string too short \"%s\"", string),
-                     errhint("E164 numbers must have at least %d digits.", E164MinimumNumberOfDigits)));
-            break;
-        case E164ParseErrorInvalidType:
-            ereport(ERROR,
-                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("invalid E164 country code for E164 number \"%s\": %d", string, countryCode)));
-            break;
-        case E164ParseErrorNoSubscriberNumberDigits:
-            ereport(ERROR,
-                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("no subscriber number digits in E164 number \"%s\"", string)));
-            break;
-        case E164ParseErrorUnassignedType:
-            ereport(ERROR,
-                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("unassigned country code for E164 number \"%s\": %d", string, countryCode)));
-            break;
-        case E164ParseErrorTypeLengthMismatch:
-            ereport(ERROR,
-                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("inconsistent length and country code for E164 number \"%s\" (country code: %d)", string, countryCode)));
-            break;
-        default:
-            elog(ERROR, "unexpected E164 parse result error code: %d", error);
-            break;
-    }
-}
-
 /*
  * PostgreSQL Interface functions
  */
@@ -129,18 +73,7 @@ PG_FUNCTION_INFO_V1(e164_in);
 Datum
 e164_in(PG_FUNCTION_ARGS)
 {
-    const char * theString = PG_GETARG_CSTRING(0);
-    E164 theNumber;
-    E164CountryCode theCode;
-    E164ParseResult parseResult = e164FromString(&theNumber, theString, &theCode);
-    if (E164ParseOK == parseResult)
-    {
-        PG_RETURN_E164(theNumber);
-    }
-    else
-        handleE164ParseError(parseResult, theString, theCode);
-
-    return 0;	/* keep compiler quiet */
+    PG_RETURN_E164(e164FromString(PG_GETARG_CSTRING(0)));
 }
 
 PG_FUNCTION_INFO_V1(e164_out);
