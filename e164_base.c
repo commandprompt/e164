@@ -76,7 +76,6 @@ static inline int rawStringFromE164_no_check (char * aString, int stringLength,
 static inline int stringFromE164_no_check (char * aString, int stringLength,
                                            E164 aNumber);
 
-static inline bool isValidE164PrefixChar (char aChar);
 static inline bool stringHasValidE164Prefix (const char * aString);
 
 static inline bool e164CountryCodeIsInRange (E164CountryCode theCountryCode);
@@ -283,23 +282,13 @@ int stringFromE164_no_check (char * aString, int stringLength, E164 aNumber)
 }
 
 /*
- * isValidE164PrefixChar returns true if theChar is a valid E164 prefix character
- * and false otherwise.
- */
-static inline
-bool isValidE164PrefixChar (char aChar)
-{
-    return (E164_PREFIX == aChar);
-}
-
-/*
  * stringHasValidE164Prefix returns true if aString has a valid E164 prefix
  * and false otherwise.
  */
 static inline
 bool stringHasValidE164Prefix (const char * aString)
 {
-    return isValidE164PrefixChar(*aString);
+    return (*E164_PREFIX_STRING == *aString);
 }
 
 /*
@@ -357,7 +346,8 @@ E164 e164FromString (const char * aString)
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
                  errmsg("invalid E164 prefix: \"%s\"", aString),
-                 errhint("E164 numbers must begin with \"%c\".", E164_PREFIX)));
+                 errhint("E164 numbers must begin with \"%s\".",
+                         E164_PREFIX_STRING)));
 
     for (currChar = aString + E164PrefixStringLength;
          *currChar;

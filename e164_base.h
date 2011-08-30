@@ -34,12 +34,12 @@
 
 #include "postgres.h"
 
-#define E164_PREFIX '+'
+#define E164_PREFIX_STRING "+"
 
 typedef enum E164StructureLimit
 {
     E164MaximumNumberOfDigits = 15,
-    E164PrefixStringLength    = 1,      /* = strlen(E164_PREFIX) */
+    E164PrefixStringLength    = sizeof(E164_PREFIX_STRING) - 1,
 
     E164MaximumRawStringLength = E164MaximumNumberOfDigits + E164PrefixStringLength,
 /* Note this does *not* include the string terminator */
