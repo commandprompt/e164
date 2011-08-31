@@ -36,6 +36,8 @@
 
 #define E164_PREFIX_STRING "+"
 
+#define E164_MAX_COUNTRY_CODE_VALUE 999
+
 typedef enum E164StructureLimit
 {
     E164MaximumNumberOfDigits = 15,
@@ -129,7 +131,7 @@ static const char * e164TypeName[] = {
 };
 */
 
-const E164Type e164TypeFor[1000];
+const E164Type e164TypeFor[E164_MAX_COUNTRY_CODE_VALUE + 1];
 
 extern E164 e164FromString (const char * aString);
 extern int stringFromE164 (char * aString, int stringLength, E164 aNumber);

@@ -56,7 +56,6 @@
 #define E164_USED_BITS_MASK       E164_COMPARISON_MASK
 
 #define E164_MAX_NUMBER_VALUE     UINT64CONST(999999999999999)
-#define E164_MAX_CC_VALUE         999
 
 
 /*
@@ -484,7 +483,8 @@ bool hasValidLengthForE164Type (int numberLength,
 static inline
 bool e164CountryCodeIsInRange (E164CountryCode theCountryCode)
 {
-    return ((0 <= theCountryCode) && (E164_MAX_CC_VALUE >= theCountryCode));
+    return ((0 <= theCountryCode) &&
+            (theCountryCode <= E164_MAX_COUNTRY_CODE_VALUE));
 }
 
 /*

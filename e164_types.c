@@ -31,7 +31,7 @@
  */
 #include "e164_base.h"
 
-const E164Type e164TypeFor[1000] = {
+const E164Type e164TypeFor[E164_MAX_COUNTRY_CODE_VALUE + 1] = {
     /* 0..9 */
     E164Reserved, E164GeographicArea, E164Invalid, E164Invalid, E164Invalid,
     E164Invalid, E164Invalid, E164GeographicArea, E164Invalid, E164Invalid,
