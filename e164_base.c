@@ -31,6 +31,7 @@
  */
 #include "postgres.h"
 #include "e164_base.h"
+#include "e164_area_codes.h"
 
 /*
  * The largest possible E164 number is 999_999_999_999_999, which is
@@ -75,19 +76,8 @@ static inline int rawStringFromE164_no_check (char * aString, int stringLength,
 static inline int stringFromE164_no_check (char * aString, int stringLength,
                                            E164 aNumber);
 
-static inline bool stringHasValidE164Prefix (const char * aString);
-
-static inline bool e164CountryCodeIsInRange (E164CountryCode theCountryCode);
 static inline void checkE164CountryCodeForRangeError (E164CountryCode theCountryCode);
 static inline int countryCodeLengthOf (E164CountryCode countryCode);
-
-static inline bool isUnassignedE164Type (E164Type aType);
-static inline bool isValidE164Type (E164Type aType);
-static inline bool isInvalidE164Type (E164Type aType);
-
-static inline E164Type e164TypeForCountryCode (E164CountryCode theCountryCode);
-static inline bool isValidE164CountryCodeType (E164CountryCode theCountryCode);
-static inline bool isInvalidE164CountryCodeType (E164CountryCode theCountryCode);
 
 
 /*
@@ -228,7 +218,7 @@ int stringFromE164_no_check (char * aString, int stringLength, E164 aNumber)
     int ccl = countryCodeLengthOf(countryCode);
 
     /* Area Code length */
-    int acl = 0; /* TODO: determine from country code and NSN */
+    int acl = e164AreaCodeLengthOf(aNumber & E164_NUMBER_MASK, countryCode, ccl);
 
     /* Copy the prefix and country code to temp buffer. */
     len = E164PrefixStringLength + ccl;
@@ -241,9 +231,12 @@ int stringFromE164_no_check (char * aString, int stringLength, E164 aNumber)
      * Check if there's enough digits for the area code and the rest
      * of the number.
      */
-    if (len + acl >= n)
+    if (len + acl > n)
+        elog(ERROR, "not enough digits for the area code in an E164 number: "
+             UINT64_FORMAT "; acl=%d", (aNumber & E164_NUMBER_MASK), acl);
+    else if (len + acl == n)
         elog(ERROR, "no digits follow the area code in an E164 number: "
-             UINT64_FORMAT, (aNumber & E164_NUMBER_MASK));
+             UINT64_FORMAT "; acl=%d", (aNumber & E164_NUMBER_MASK), acl);
 
     if (acl > 0)
     {
@@ -284,7 +277,6 @@ int stringFromE164_no_check (char * aString, int stringLength, E164 aNumber)
  * stringHasValidE164Prefix returns true if aString has a valid E164 prefix
  * and false otherwise.
  */
-static inline
 bool stringHasValidE164Prefix (const char * aString)
 {
     return (*E164_PREFIX_STRING == *aString);
@@ -480,7 +472,6 @@ bool hasValidLengthForE164Type (int numberLength,
  * e164CountryCodeIsInRange returns true if the E164CountryCode argument is
  * within the proper range for E164CountryCodes and false otherwise.
  */
-static inline
 bool e164CountryCodeIsInRange (E164CountryCode theCountryCode)
 {
     return ((0 <= theCountryCode) &&
@@ -508,7 +499,6 @@ int countryCodeLengthOf (E164CountryCode countryCode)
 /*
  * isUnassignedE164Type returns true if aType is unassigned or false otherwise.
  */
-static inline
 bool isUnassignedE164Type (E164Type aType)
 {
     return ((E164SpareWithoutNote == aType) ||
@@ -516,7 +506,6 @@ bool isUnassignedE164Type (E164Type aType)
             (E164Reserved == aType));
 }
 
-static inline
 bool isValidE164Type (E164Type aType)
 {
     return (E164Invalid != aType);
@@ -525,26 +514,22 @@ bool isValidE164Type (E164Type aType)
 /*
  * isInvalidE164Type returns true if aType is invalid or false otherwise.
  */
-static inline
 bool isInvalidE164Type (E164Type aType)
 {
     return !isValidE164Type(aType);
 }
 
-static inline
 E164Type e164TypeForCountryCode (E164CountryCode theCountryCode)
 {
     checkE164CountryCodeForRangeError(theCountryCode);
     return e164TypeFor[theCountryCode];
 }
 
-static inline
 bool isValidE164CountryCodeType (E164CountryCode theCountryCode)
 {
     return isValidE164Type(e164TypeForCountryCode(theCountryCode));
 }
 
-static inline
 bool isInvalidE164CountryCodeType (E164CountryCode theCountryCode)
 {
     return !isValidE164CountryCodeType(theCountryCode);

@@ -30,10 +30,12 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "postgres.h"
+#include "access/hash.h"
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
-#include "access/hash.h"
+#include "utils/guc.h"
 #include "e164_base.h"
+#include "e164_area_codes.h"
 
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -47,6 +49,8 @@ PG_MODULE_MAGIC;
 
 #define PG_GETARG_E164(X) PG_GETARG_INT64((int64) X)
 #define PG_RETURN_E164(X) PG_RETURN_INT64((int64) X)
+
+void _PG_init(void);
 
 Datum e164_in(PG_FUNCTION_ARGS);
 Datum e164_out(PG_FUNCTION_ARGS);
@@ -68,6 +72,50 @@ Datum e164_cmp(PG_FUNCTION_ARGS);
 Datum e164_cast_to_text(PG_FUNCTION_ARGS);
 
 Datum e164_country_code(PG_FUNCTION_ARGS);
+
+static const char * guc_area_codes_format;
+
+static bool check_area_codes_format(char ** newval, void ** extra,
+                                    GucSource source);
+static void assign_area_codes_format(const char * newval, void * extra);
+
+void
+_PG_init(void)
+{
+    DefineCustomStringVariable("e164.area_codes_format",
+                               gettext_noop("Specifies known area codes formatting patterns."),
+                               NULL, /* TODO: long_desc */
+                               (char **) &guc_area_codes_format,
+                               "",
+                               PGC_SIGHUP, 0,
+                               check_area_codes_format,
+                               assign_area_codes_format,
+                               NULL);
+}
+
+static bool
+check_area_codes_format(char ** newval, void ** extra, GucSource source)
+{
+    bool result;
+    /* The parse function modifies the format string for tokenization. */
+    char * format = strdup(*newval);
+    if (!format)
+    {
+        GUC_check_errdetail("out of memory");
+        return false;
+    }
+    result = parseE164AreaCodesFormat(format, (E164AreaCodesInfo **) extra);
+
+    free(format);
+    return result;
+}
+
+static void
+assign_area_codes_format(const char * newval, void * extra)
+{
+    guc_area_codes_format = newval;
+    e164SetAreaCodesInfo((E164AreaCodesInfo *) extra);
+}
 
 PG_FUNCTION_INFO_V1(e164_in);
 Datum

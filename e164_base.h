@@ -131,6 +131,7 @@ static const char * e164TypeName[] = {
 };
 */
 
+
 const E164Type e164TypeFor[E164_MAX_COUNTRY_CODE_VALUE + 1];
 
 extern E164 e164FromString (const char * aString);
@@ -140,5 +141,16 @@ extern int countryCodeStringFromE164 (char * aString, int stringLength,
                                       E164 aNumber);
 
 extern int64 e164Comparison (E164 firstNumber, E164 secondNumber);
+
+extern bool stringHasValidE164Prefix (const char * aString);
+extern bool e164CountryCodeIsInRange (E164CountryCode theCountryCode);
+
+extern bool isUnassignedE164Type (E164Type aType);
+extern bool isValidE164Type (E164Type aType);
+extern bool isInvalidE164Type (E164Type aType);
+
+extern E164Type e164TypeForCountryCode (E164CountryCode theCountryCode);
+extern bool isValidE164CountryCodeType (E164CountryCode theCountryCode);
+extern bool isInvalidE164CountryCodeType (E164CountryCode theCountryCode);
 
 #endif /* !E164_BASE_H */
