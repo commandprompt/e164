@@ -87,7 +87,7 @@ _PG_init(void)
                                NULL, /* TODO: long_desc */
                                (char **) &guc_area_codes_format,
                                "",
-                               PGC_SIGHUP, 0,
+                               PGC_USERSET, 0,
                                check_area_codes_format,
                                assign_area_codes_format,
                                NULL);
