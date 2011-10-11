@@ -96,7 +96,7 @@ e164SetAreaCodesInfo(E164AreaCodesInfo * codesInfo)
  * The format string consits of zero or more country code specifiers
  * '+ccc' followed by a colon symbol and the default area code pattern
  * (one or more 'x' symbols.)  The default area code pattern may be
- * optionally followed by a coma and a coma-separated list of area
+ * optionally followed by a comma and a comma-separated list of area
  * code number exceptions.
  *
  * E.g., for Australia (country code +61,) the default area code
