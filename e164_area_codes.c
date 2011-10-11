@@ -272,9 +272,15 @@ parseAreaCodesInfo(char * aFormat, E164AreaCodesInfo * codesInfo,
         if (!*token)
             currentFormat->exceptionsList = NULL;
         else {
+            ++token; /* skip the comma */
+            if (!*token)
+            {
+                stopChar = token;
+                goto bad_stop_char;
+            }
+
             currentFormat->exceptionsList = exceptionsListStart;
 
-            ++token; /* skip the comma */
             if (!parseAreaCodeExceptions(token, aFormat, currentFormat,
                                          &exceptionsListStart, &stopChar))
                 goto bad_stop_char;
