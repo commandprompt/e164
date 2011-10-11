@@ -41,8 +41,7 @@ typedef struct E164AreaCodesFormat
 {
     int countryCode;
     int defaultAreaCodeLength;
-    int numberOfExceptions;
-    E164AreaCode * exceptions;
+    char * exceptionsList;
 } E164AreaCodesFormat;
 
 typedef struct E164AreaCodesInfo

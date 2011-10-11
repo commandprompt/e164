@@ -36,10 +36,11 @@
 #include "e164_area_codes.h"
 
 static bool parseAreaCodesInfo(char * aFormat, E164AreaCodesInfo * codesInfo,
-                               E164AreaCode * exceptions);
+                               char * exceptionsListStart);
 
 static bool parseAreaCodeExceptions(char * aString, const char * aFormat,
                                     E164AreaCodesFormat * theFormat,
+                                    char ** exceptionsListStart,
                                     char ** badStopChar);
 
 static bool e164TypeSupportsAreaCode(E164Type aType);
@@ -56,7 +57,6 @@ e164AreaCodeLengthOf(E164 aNumber, E164CountryCode aCountryCode,
     E164AreaCodesFormat * format;
     size_t numberOfFormats;
     char buffer[E164MaximumNumberOfDigits + 1];
-    int i;
 
     if (!e164CountryCodeSupportsAreaCode(aCountryCode) || !currentCodesInfo)
         return 0;
@@ -69,13 +69,32 @@ e164AreaCodeLengthOf(E164 aNumber, E164CountryCode aCountryCode,
 
     snprintf(buffer, sizeof(buffer), UINT64_FORMAT, aNumber);
 
-    for (i = 0; i < format->numberOfExceptions; ++i)
+    if (format->exceptionsList)
     {
-        /* TODO: suboptimal */
-        char temp[E164MaximumNumberOfDigits + 1];
-        int len = snprintf(temp, sizeof(temp), "%d", format->exceptions[i]);
-        if (strncmp(buffer + countryCodeLength, temp, len) == 0)
-            return len;
+        const char * start = buffer + countryCodeLength;
+        const char * p = start;
+        const char * e;
+        for (e = format->exceptionsList; ; ++e)
+        {
+            if (*p != *e)
+            {
+                if (!*e || *e == ',')
+                    return p - start;
+                p = start;
+                while (*e && *e != ',')
+                    ++e;
+                if (!*e)
+                    break;
+                continue;
+            }
+            if (!*e)
+            {
+                if (!*p)
+                    return p - start;
+                break;
+            }
+            ++p;
+        }
     }
 
     return format->defaultAreaCodeLength;
@@ -115,9 +134,10 @@ parseE164AreaCodesFormat(char * aFormat, E164AreaCodesInfo ** theCodesInfo)
     size_t mainAllocSize = sizeof(E164AreaCodesInfo);
     size_t addedAllocSize = 0;
     const char * p;
+    const char * exceptionsListStart = NULL;
 
     /* Determine required allocation size from the number of stop chars. */
-    for (p = aFormat; *p; ++p)
+    for (p = aFormat; ; ++p)
     {
         if (*p == ':')
         {
@@ -125,7 +145,17 @@ parseE164AreaCodesFormat(char * aFormat, E164AreaCodesInfo ** theCodesInfo)
             mainAllocSize += sizeof(E164AreaCodesFormat);
         }
         else if (*p == ',')
-            addedAllocSize += sizeof(int);
+        {
+            if (!exceptionsListStart)
+                exceptionsListStart = p + 1;
+        }
+        else if ((*p == ';' || !*p) && exceptionsListStart)
+        {
+            addedAllocSize += p - exceptionsListStart + 1 /* NUL */;
+            exceptionsListStart = NULL;
+        }
+        if (!*p)
+            break;
     }
     codesInfo = (E164AreaCodesInfo *) malloc(mainAllocSize + addedAllocSize);
     if (!codesInfo)
@@ -136,7 +166,7 @@ parseE164AreaCodesFormat(char * aFormat, E164AreaCodesInfo ** theCodesInfo)
     codesInfo->numberOfFormats = numberOfFormats;
 
     if (!parseAreaCodesInfo(aFormat, codesInfo,
-                            (int *)(((char *) codesInfo) + mainAllocSize)))
+                            ((char *) codesInfo) + mainAllocSize))
     {
         free(codesInfo);
         return false;
@@ -155,7 +185,7 @@ parseE164AreaCodesFormat(char * aFormat, E164AreaCodesInfo ** theCodesInfo)
 
 static bool
 parseAreaCodesInfo(char * aFormat, E164AreaCodesInfo * codesInfo,
-                   E164AreaCode * exceptions)
+                   char * exceptionsListStart)
 {
     size_t numberOfFormats = 0;
     char * token0 = aFormat;
@@ -239,11 +269,16 @@ parseAreaCodesInfo(char * aFormat, E164AreaCodesInfo * codesInfo,
         token = stopChar;
         stopChar = NULL;
 
-        currentFormat->exceptions = exceptions;
-        if (!parseAreaCodeExceptions(token, aFormat, currentFormat, &stopChar))
-            goto bad_stop_char;
+        if (!*token)
+            currentFormat->exceptionsList = NULL;
+        else {
+            currentFormat->exceptionsList = exceptionsListStart;
 
-        exceptions += currentFormat->numberOfExceptions;
+            ++token; /* skip the comma */
+            if (!parseAreaCodeExceptions(token, aFormat, currentFormat,
+                                         &exceptionsListStart, &stopChar))
+                goto bad_stop_char;
+        }
     }
 
     return true;
@@ -259,39 +294,33 @@ fail:
 static bool
 parseAreaCodeExceptions(char * aString, const char * aFormat,
                         E164AreaCodesFormat * theFormat,
+                        char ** exceptionsListStart,
                         char ** badStopChar)
 {
-    size_t numberOfExceptions = 0;
-    E164AreaCode * exceptions = theFormat->exceptions;
-    char * savepoint = NULL;
-    for (;;)
+    size_t exceptionsListLength;
+    char previous = 0;
+    char * p;
+    for (p = aString; *p; ++p)
     {
-        E164AreaCode areaCode;
-        char * stopChar;
-        char * token = strtok_r(aString, ",", &savepoint);
-        if (!token)
-            break;
-        aString = NULL;
-
-        /* TODO: check for overflow */
-        areaCode = strtol(token, &stopChar, 10);
-        if (*stopChar)
+        if ((!isdigit(*p) && *p != ',') || (previous == ',' && *p == ','))
         {
-            *badStopChar = stopChar;
+            *badStopChar = p;
+            GUC_check_errhint("comma-separated list of area codes is expected");
             return false;
         }
-
-        if (lfind(&areaCode, exceptions, &numberOfExceptions,
-                  sizeof(int), compareInts))
-        {
-            GUC_check_errdetail("duplicate area code: %d at character %td",
-                                areaCode, token - aFormat + 1);
-            return false;
-        }
-        exceptions[numberOfExceptions++] = areaCode;
+        previous = *p;
+    }
+    if (previous == ',')
+    {
+        *badStopChar = p;
+        GUC_check_errhint("unterminated list of area codes found (trailing comma)");
+        return false;
     }
 
-    theFormat->numberOfExceptions = numberOfExceptions;
+    exceptionsListLength = p - aString + 1 /* NUL */;
+    memcpy(theFormat->exceptionsList, aString, exceptionsListLength);
+
+    *exceptionsListStart += exceptionsListLength;
     return true;
 }
 
