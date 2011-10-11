@@ -34,6 +34,14 @@
 
 #include "postgres.h"
 
+#if PG_VERSION_NUM < 90100
+#define GUC_check_errdetail(args...)                    \
+  ereport(ERROR,                                        \
+          (errcode(ERRCODE_INVALID_PARAMETER_VALUE),    \
+           errmsg(args)))
+#define GUC_check_errhint(...)
+#endif
+
 #define E164_PREFIX_STRING "+"
 
 #define E164_MAX_COUNTRY_CODE_VALUE 999

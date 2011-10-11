@@ -75,9 +75,16 @@ Datum e164_country_code(PG_FUNCTION_ARGS);
 
 static const char * guc_area_codes_format;
 
+#if PG_VERSION_NUM < 90100
+static const char * check_assign_area_codes_format(const char * newval,
+                                                   bool doit,
+                                                   GucSource source);
+#endif
+
 static bool check_area_codes_format(char ** newval, void ** extra,
                                     GucSource source);
 static void assign_area_codes_format(const char * newval, void * extra);
+
 
 void
 _PG_init(void)
@@ -88,8 +95,12 @@ _PG_init(void)
                                (char **) &guc_area_codes_format,
                                "",
                                PGC_USERSET, 0,
+#if PG_VERSION_NUM < 90100
+                               check_assign_area_codes_format,
+#else
                                check_area_codes_format,
                                assign_area_codes_format,
+#endif
                                NULL);
 }
 
@@ -110,12 +121,33 @@ check_area_codes_format(char ** newval, void ** extra, GucSource source)
     return result;
 }
 
+#if PG_VERSION_NUM < 90100
+static const char *
+check_assign_area_codes_format(const char * newval, bool doit, GucSource source)
+{
+    const char * result = newval;
+    void * extra = NULL;
+    if (check_area_codes_format((char **)&result, &extra, source))
+    {
+        if (doit)
+            assign_area_codes_format(result, extra);
+        return result;
+    }
+    else
+    {
+        free(extra);
+        return NULL;
+    }
+}
+#endif
+
 static void
 assign_area_codes_format(const char * newval, void * extra)
 {
     guc_area_codes_format = newval;
     e164SetAreaCodesInfo((E164AreaCodesInfo *) extra);
 }
+
 
 PG_FUNCTION_INFO_V1(e164_in);
 Datum
