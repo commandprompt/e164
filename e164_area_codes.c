@@ -285,8 +285,14 @@ parseAreaCodesInfo(char * aFormat, E164AreaCodesInfo * codesInfo,
 
 bad_stop_char:
     if (stopChar)
-        GUC_check_errdetail("unexpected symbol: '%c' at character %td",
-                            *stopChar, stopChar - aFormat + 1);
+    {
+        if (*stopChar)
+            GUC_check_errdetail("unexpected symbol: '%c' at character %td",
+                                *stopChar, stopChar - aFormat + 1);
+        else
+            GUC_check_errdetail("unexpected end of string at character %td",
+                                stopChar - aFormat + 1);
+    }
 fail:
     return false;
 }
