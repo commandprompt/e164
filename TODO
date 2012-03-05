@@ -1,3 +1,4 @@
 ## TODO
 
 * Add ENUM output (and possibly input) functions
+* Lacks regression tests on GUC option parser.
